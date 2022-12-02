@@ -23,28 +23,28 @@ type MediaObject union {
 type MediaObject3DModel struct {
   name optional String
   content &Bytes
-  contentSize optional Integer
+  contentSize optional Int
   encodingFormat Encoding3DModel
 }
 
 type MediaObjectImage struct {
   name optional String
   content &Bytes
-  contentSize optional Integer
+  contentSize optional Int
   encodingFormat EncodingImage
 }
 
 type MediaObjectAudio struct {
   name optional String
   content &Bytes
-  contentSize optional Integer
+  contentSize optional Int
   encodingFormat EncodingAudio
 }
 
 type MediaObjectVideo struct {
   name optional String
   content &Bytes
-  contentSize optional Integer
+  contentSize optional Int
   encodingFormat EncodingVideo
 }
 ```
