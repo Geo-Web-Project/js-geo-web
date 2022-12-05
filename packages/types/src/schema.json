@@ -1,0 +1,219 @@
+{
+  "types": {
+    "BasicProfile": {
+      "struct": {
+        "fields": {
+          "name": {
+            "type": "String",
+            "optional": true
+          },
+          "url": {
+            "type": "String",
+            "optional": true
+          }
+        },
+        "representation": {
+          "map": {}
+        }
+      }
+    },
+    "MediaGallery": {
+      "list": {
+        "valueType": {
+          "link": {
+            "expectedType": "MediaObject"
+          }
+        }
+      }
+    },
+    "MediaObject": {
+      "union": {
+        "members": [
+          "MediaObject3DModel",
+          "MediaObjectImage",
+          "MediaObjectAudio",
+          "MediaObjectVideo"
+        ],
+        "representation": {
+          "inline": {
+            "discriminantKey": "mediaType",
+            "discriminantTable": {
+              "3DModel": "MediaObject3DModel",
+              "ImageObject": "MediaObjectImage",
+              "AudioObject": "MediaObjectAudio",
+              "VideoObject": "MediaObjectVideo"
+            }
+          }
+        }
+      }
+    },
+    "MediaObject3DModel": {
+      "struct": {
+        "fields": {
+          "name": {
+            "type": "String",
+            "optional": true
+          },
+          "content": {
+            "type": {
+              "link": {
+                "expectedType": "Bytes"
+              }
+            }
+          },
+          "contentSize": {
+            "type": "Int",
+            "optional": true
+          },
+          "encodingFormat": {
+            "type": "Encoding3DModel"
+          }
+        },
+        "representation": {
+          "map": {}
+        }
+      }
+    },
+    "MediaObjectImage": {
+      "struct": {
+        "fields": {
+          "name": {
+            "type": "String",
+            "optional": true
+          },
+          "content": {
+            "type": {
+              "link": {
+                "expectedType": "Bytes"
+              }
+            }
+          },
+          "contentSize": {
+            "type": "Int",
+            "optional": true
+          },
+          "encodingFormat": {
+            "type": "EncodingImage"
+          }
+        },
+        "representation": {
+          "map": {}
+        }
+      }
+    },
+    "MediaObjectAudio": {
+      "struct": {
+        "fields": {
+          "name": {
+            "type": "String",
+            "optional": true
+          },
+          "content": {
+            "type": {
+              "link": {
+                "expectedType": "Bytes"
+              }
+            }
+          },
+          "contentSize": {
+            "type": "Int",
+            "optional": true
+          },
+          "encodingFormat": {
+            "type": "EncodingAudio"
+          }
+        },
+        "representation": {
+          "map": {}
+        }
+      }
+    },
+    "MediaObjectVideo": {
+      "struct": {
+        "fields": {
+          "name": {
+            "type": "String",
+            "optional": true
+          },
+          "content": {
+            "type": {
+              "link": {
+                "expectedType": "Bytes"
+              }
+            }
+          },
+          "contentSize": {
+            "type": "Int",
+            "optional": true
+          },
+          "encodingFormat": {
+            "type": "EncodingVideo"
+          }
+        },
+        "representation": {
+          "map": {}
+        }
+      }
+    },
+    "Encoding3DModel": {
+      "enum": {
+        "members": [
+          "Glb",
+          "Usdz"
+        ],
+        "representation": {
+          "string": {
+            "Glb": "model/gltf-binary",
+            "Usdz": "model/vnd.usdz+zip"
+          }
+        }
+      }
+    },
+    "EncodingImage": {
+      "enum": {
+        "members": [
+          "Gif",
+          "Jpeg",
+          "Png",
+          "Svg"
+        ],
+        "representation": {
+          "string": {
+            "Gif": "image/gif",
+            "Jpeg": "image/jpeg",
+            "Png": "image/png",
+            "Svg": "image/svg+xml"
+          }
+        }
+      }
+    },
+    "EncodingAudio": {
+      "enum": {
+        "members": [
+          "Mpeg",
+          "Mp4"
+        ],
+        "representation": {
+          "string": {
+            "Mpeg": "audio/mpeg",
+            "Mp4": "audio/mp4"
+          }
+        }
+      }
+    },
+    "EncodingVideo": {
+      "enum": {
+        "members": [
+          "Mpeg",
+          "Mp4"
+        ],
+        "representation": {
+          "string": {
+            "Mpeg": "video/mpeg",
+            "Mp4": "video/mp4"
+          }
+        }
+      }
+    }
+  }
+}
