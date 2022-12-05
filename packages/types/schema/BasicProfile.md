@@ -16,6 +16,6 @@ type BasicProfile struct {
 | Property | [Geo Web Cadastre](https://github.com/Geo-Web-Project/cadastre) | [GeoWeb.app](https://geoweb.app) |
 | -------- | --------------------------------------------------------------- | -------------------------------- |
 | `name`   | ✅                                                              | ✅                               |
-| `url`    | ✅                                                              | ❌                               |
+| `url`    | ✅                                                              | ✅                               |
 
 ## [Discussion](https://forum.geoweb.network/t/content-basic-profile/59)
