@@ -56,37 +56,75 @@ export class API {
       return result.value;
     }
   }
-  /*
-   * Update CID at path and recursively update all parents from the leaf to the root.
-   *  - Returns new root
-   */
-  async putCid(root: CID, path: string, cid: CID): Promise<CID> {
-    // Base case, path is root
-    if (path === "/" || path === "") {
-      return cid;
-    }
-
-    // 1. Replace CID at first parent
-    const pathSegments = path.split("/");
-    const lastPathSegment = pathSegments[pathSegments.length - 1];
-    const parentPath = path.replace(`/${lastPathSegment}`, "");
-    const { value } = await this.#ipfs.dag.get(root, { path: parentPath });
-    value[lastPathSegment] = cid;
-
-    const newCid = await this.#ipfs.dag.put(value, {
-      storeCodec: "dag-cbor",
-    });
-
-    // 2b. Replace parent CID recursively
-    return this.putCid(root, parentPath, newCid);
-  }
 
   /*
    * Update node at path and recursively update all parents from the leaf to the root.
    *  - Returns new root
    *  - Validates schema + transforms typed -> representation before write
    */
-  // putPath(root: CID, path: string, data: any): CID {}
+  async putPath(root: CID, path: string, data: any) {
+    console.log(root.toString(), path, data);
+    // 1. Replace CID at first parent
+    const pathSegments = path.split("/");
+    const lastPathSegment = pathSegments[pathSegments.length - 1];
+    let parentPath = path.replace(`/${lastPathSegment}`, "");
+    const { cid, remainderPath } = await this.#ipfs.dag.resolve(
+      `/ipfs/${root.toString()}${parentPath}`
+    );
+    const { value } = await this.#ipfs.dag.get(cid);
+
+    function putInnerPath(node: any, path: string, data: any): any {
+      console.log("INNER:", node, path, data);
+      const pathSegments = path.split("/");
+
+      // Base case, no path or root
+      if (pathSegments.length == 2 && pathSegments[1] === "") {
+        return node;
+      }
+      // Base case, one path left
+      if (pathSegments.length == 1) {
+        node[pathSegments[0]] = data;
+        return node;
+      }
+      // Base case, one path left with /
+      if (pathSegments.length == 2) {
+        node[pathSegments[1]] = data;
+        return node;
+      }
+
+      // Put on nested object
+      node[pathSegments[1]] = putInnerPath(
+        node[pathSegments[1]],
+        pathSegments.slice(2).join("/"),
+        data
+      );
+      return node;
+    }
+
+    let newValue;
+    if (remainderPath === "" || remainderPath == undefined) {
+      // Replace leaf
+      newValue = putInnerPath(value, `/${lastPathSegment}`, data);
+    } else {
+      // Replace nested leaf
+      const nestedPath = `/${remainderPath}/${lastPathSegment}`;
+      newValue = putInnerPath(value, nestedPath, data);
+
+      parentPath = parentPath.replace(remainderPath, "");
+    }
+
+    const newCid = await this.#ipfs.dag.put(newValue, {
+      storeCodec: "dag-cbor",
+    });
+
+    // 2a. Base case, path is root
+    if (parentPath === "/" || parentPath === "") {
+      return newCid;
+    }
+
+    // 2b. Replace parent CID recursively
+    return this.putPath(root, parentPath, newCid);
+  }
 
   /*
    * Delete node at path and recursively update all parents from the leaf to the root.

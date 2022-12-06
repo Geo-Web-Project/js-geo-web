@@ -239,7 +239,7 @@ describe("getPath", () => {
   });
 });
 
-describe.only("putCid", () => {
+describe.only("putPath", () => {
   beforeAll(async () => {
     const seed = new Uint8Array(32);
     const did = new DID({
@@ -309,7 +309,7 @@ describe.only("putCid", () => {
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
-    const result = await gwContent.raw.putCid(
+    const result = await gwContent.raw.putPath(
       rootCid,
       "/mediaGallery/0",
       CID.parse("bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u")
@@ -335,7 +335,7 @@ describe.only("putCid", () => {
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
-    const result = await gwContent.raw.putCid(
+    const result = await gwContent.raw.putPath(
       rootCid,
       "/mediaGallery",
       CID.parse("bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u")
@@ -347,5 +347,20 @@ describe.only("putCid", () => {
         "bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u"
       ).toString()
     );
+  }, 30000);
+
+  test("should put path", async () => {
+    const rootCid = await ipfs.dag.put({
+      name: {
+        inner: "Hello",
+      },
+    });
+
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const result = await gwContent.raw.putPath(rootCid, "/name/inner", "World");
+
+    const { value } = await ipfs.dag.get(result, { path: "/name/inner" });
+    expect(value).toEqual("World");
   }, 30000);
 });
