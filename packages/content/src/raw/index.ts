@@ -23,7 +23,9 @@ export class API {
     // this.#web3Storage = opts.web3Storage;
   }
 
-  // Resolve content root
+  /*
+   * Resolve content root
+   */
   async resolveRoot(opts: ParcelOptions): Promise<CID> {
     const doc = await TileDocument.deterministic<Record<string, any>>(
       this.#ceramic,
