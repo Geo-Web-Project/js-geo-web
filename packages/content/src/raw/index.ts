@@ -62,8 +62,21 @@ export class API {
    *  - Returns new root
    *  - Validates schema + transforms typed -> representation before write
    */
-  async putPath(root: CID, path: string, data: any) {
-    console.log(root.toString(), path, data);
+  async putPath(
+    root: CID,
+    path: string,
+    data: any,
+    opts?: SchemaOptions
+  ): Promise<CID> {
+    let newData = data;
+    if (opts?.schema) {
+      const schemaTyped = create(schema, opts.schema);
+      const newData = schemaTyped.toRepresentation(data);
+      if (newData === undefined) {
+        throw new TypeError("Invalid data form, does not match schema");
+      }
+    }
+
     // 1. Replace CID at first parent
     const pathSegments = path.split("/");
     const lastPathSegment = pathSegments[pathSegments.length - 1];
@@ -74,7 +87,6 @@ export class API {
     const { value } = await this.#ipfs.dag.get(cid);
 
     function putInnerPath(node: any, path: string, data: any): any {
-      console.log("INNER:", node, path, data);
       const pathSegments = path.split("/");
 
       // Base case, no path or root
@@ -104,11 +116,11 @@ export class API {
     let newValue;
     if (remainderPath === "" || remainderPath == undefined) {
       // Replace leaf
-      newValue = putInnerPath(value, `/${lastPathSegment}`, data);
+      newValue = putInnerPath(value, `/${lastPathSegment}`, newData);
     } else {
       // Replace nested leaf
       const nestedPath = `/${remainderPath}/${lastPathSegment}`;
-      newValue = putInnerPath(value, nestedPath, data);
+      newValue = putInnerPath(value, nestedPath, newData);
 
       parentPath = parentPath.replace(remainderPath, "");
     }

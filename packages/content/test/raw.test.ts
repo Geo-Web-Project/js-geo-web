@@ -349,7 +349,7 @@ describe("putPath", () => {
     );
   }, 30000);
 
-  test("should put path", async () => {
+  test("should put inner path", async () => {
     const rootCid = await ipfs.dag.put({
       name: {
         inner: "Hello",
@@ -362,5 +362,32 @@ describe("putPath", () => {
 
     const { value } = await ipfs.dag.get(result, { path: "/name/inner" });
     expect(value).toEqual("World");
+  }, 30000);
+
+  test("should put with schema", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const result = await gwContent.raw.putPath(
+      rootCid,
+      "/basicProfile",
+      {
+        name: "Hello World",
+      },
+      { schema: "BasicProfile" }
+    );
+
+    const { value } = await ipfs.dag.get(result, {
+      path: "/basicProfile/name",
+    });
+    expect(value).toEqual("Hello World");
   }, 30000);
 });
