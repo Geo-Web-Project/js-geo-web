@@ -4,6 +4,13 @@ import { CeramicApi } from "@ceramicnetwork/common";
 import { ConfigOptions, ParcelOptions } from "../index";
 import { CID } from "multiformats";
 import { TileDocument } from "@ceramicnetwork/stream-tile";
+import { schema } from "@geo-web/types";
+// @ts-ignore
+import { create } from "@ipld/schema/typed.js";
+
+type SchemaOptions = {
+  schema?: string;
+};
 
 export class API {
   #ipfs: IPFS;
@@ -33,10 +40,19 @@ export class API {
    * Retrieves IPLD object at path
    *  - Validates schema + transforms representation -> typed before read
    */
-  async getPath(path: string, opts: ParcelOptions): Promise<any> {
+  async getPath(
+    path: string,
+    opts: ParcelOptions & SchemaOptions
+  ): Promise<any> {
     const root = await this.resolveRoot(opts);
     const result = await this.#ipfs.dag.get(root, { path });
-    return result.value;
+
+    if (opts.schema) {
+      const schemaTyped = create(schema, opts.schema);
+      return schemaTyped.toTyped(result.value);
+    } else {
+      return result.value;
+    }
   }
 
   /*

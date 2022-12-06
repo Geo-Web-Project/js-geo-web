@@ -1,3 +1,4 @@
+export * from "./ParcelRoot";
 export * from "./BasicProfile";
 export * from "./MediaGallery";
 

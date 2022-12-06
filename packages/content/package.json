@@ -1,5 +1,5 @@
 {
-  "name": "@js-geo-web/content",
+  "name": "@geo-web/content",
   "version": "0.1.0",
   "description": "",
   "type": "module",
@@ -57,6 +57,9 @@
     "@ceramicnetwork/common": "^2.13.0",
     "@ceramicnetwork/http-client": "^2.10.0",
     "@ceramicnetwork/stream-tile": "^2.9.0",
+    "@geo-web/types": "workspace:^0.1.0",
+    "@ipld/dag-cbor": "^8.0.0",
+    "@ipld/schema": "^4.1.2",
     "@typescript-eslint/parser": "^4.33.0",
     "caip": "^1.1.0",
     "eslint": "^7.32.0",

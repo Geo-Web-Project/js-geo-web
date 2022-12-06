@@ -17,7 +17,7 @@ import { EthereumNodeAuth } from "@didtools/pkh-ethereum";
 import { AuthMethod } from "@didtools/cacao";
 import { CID } from "multiformats/cid";
 import * as json from "multiformats/codecs/json";
-import * as dagjson from '@ipld/dag-json'
+import * as dagjson from "@ipld/dag-json";
 
 declare global {
   const ceramic: CeramicApi;
@@ -104,6 +104,137 @@ describe("resolveRoot", () => {
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
     const result = await gwContent.raw.resolveRoot({ ownerId, parcelId });
-    expect(result).toEqual(cid)
+    expect(result).toEqual(cid);
+  });
+});
+
+describe("getPath", () => {
+  beforeAll(async () => {
+    const seed = new Uint8Array(32);
+    const did = new DID({
+      resolver: getResolver(),
+      provider: new Ed25519Provider(seed),
+    });
+    ceramic.did = did;
+
+    const authMethod = await createEthereumAuthMethod();
+    const session = await DIDSession.authorize(authMethod, {
+      resources: [`ceramic://*`],
+    });
+    ceramic.did = session.did;
+
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    // Create DAG
+    const mediaGallery = [
+      CID.parse("bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u"),
+      CID.parse("bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u"),
+    ];
+    const basicProfile = {
+      name: "Hello",
+      url: "http://example.com",
+    };
+
+    const mediaGalleryCid = await ipfs.dag.put(mediaGallery, {
+      storeCodec: "dag-cbor",
+    });
+
+    const basicProfileCid = await ipfs.dag.put(basicProfile, {
+      storeCodec: "dag-cbor",
+    });
+
+    const parcelRoot = {
+      basicProfile: basicProfileCid,
+      mediaGallery: mediaGalleryCid,
+    };
+
+    const parcelRootCid = await ipfs.dag.put(parcelRoot, {
+      storeCodec: "dag-cbor",
+    });
+    const bytes = dagjson.encode(parcelRootCid);
+    const doc = await TileDocument.deterministic<Record<string, any>>(ceramic, {
+      controllers: [session.did.parent],
+      family: `geo-web-parcel`,
+      tags: [parcelId.toString()],
+    });
+    await doc.update(json.decode(bytes));
+  });
+
+  test("should get untyped root path", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const result = await gwContent.raw.getPath("/", {
+      ownerId,
+      parcelId,
+    });
+    expect(result).toBeDefined();
+  });
+
+  test("should get typed root path", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const result = await gwContent.raw.getPath("/", {
+      ownerId,
+      parcelId,
+      schema: "ParcelRoot",
+    });
+    expect(result).toBeDefined();
+  });
+
+  test("should get typed path", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const result = await gwContent.raw.getPath("/mediaGallery", {
+      ownerId,
+      parcelId,
+      schema: "MediaGallery",
+    });
+    expect(result).toBeDefined();
+  });
+
+  test("should return undefined on invalid schema", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const result = await gwContent.raw.getPath("/mediaGallery", {
+      ownerId,
+      parcelId,
+      schema: "BasicProfile",
+    });
+    expect(result).toBeUndefined();
   });
 });

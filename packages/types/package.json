@@ -1,5 +1,5 @@
 {
-  "name": "@js-geo-web/types",
+  "name": "@geo-web/types",
   "version": "0.1.0",
   "description": "",
   "type": "module",
@@ -13,9 +13,10 @@
   ],
   "scripts": {
     "build:clean": "del dist",
-    "build:schema": "ipld-schema to-json schema/*.md > src/schema.json",
+    "build:js": "swc src -d ./dist --config-file ../../.swcrc",
+    "build:schema": "ipld-schema to-json schema/*.md > schema/schema.json",
     "build:types": "tsc --emitDeclarationOnly --skipLibCheck",
-    "build": "pnpm build:clean && pnpm build:types && pnpm build:schema",
+    "build": "pnpm build:clean && pnpm build:schema && pnpm build:types && pnpm build:js && cp ./src/schema.json ./dist/schema.json",
     "lint": "eslint src/* test/* --fix",
     "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js",
     "test:ci": "pnpm run test --ci --coverage",
