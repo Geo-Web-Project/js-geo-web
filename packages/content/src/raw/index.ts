@@ -62,7 +62,6 @@ export class API {
    *  - Returns new root
    *  - Validates schema + transforms typed -> representation before write
    */
-<<<<<<< HEAD
   async putPath(root: CID, path: string, data: any) {
     console.log(root.toString(), path, data);
     // 1. Replace CID at first parent
@@ -126,9 +125,6 @@ export class API {
     // 2b. Replace parent CID recursively
     return this.putPath(root, parentPath, newCid);
   }
-=======
-  // putPath(root: CID, path: string, data: any): CID {}
->>>>>>> main
 
   /*
    * Delete node at path and recursively update all parents from the leaf to the root.

@@ -238,9 +238,8 @@ describe("getPath", () => {
     expect(result).toBeUndefined();
   });
 });
-<<<<<<< HEAD
 
-describe.only("putPath", () => {
+describe("putPath", () => {
   beforeAll(async () => {
     const seed = new Uint8Array(32);
     const did = new DID({
@@ -365,5 +364,3 @@ describe.only("putPath", () => {
     expect(value).toEqual("World");
   }, 30000);
 });
-=======
->>>>>>> main
