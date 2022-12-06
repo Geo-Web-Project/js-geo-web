@@ -47,6 +47,7 @@ importers:
       '@didtools/pkh-ethereum': ^0.0.3
       '@ethersproject/wallet': ^5.7.0
       '@geo-web/types': workspace:^0.1.0
+      '@ipld/car': 3.2.4
       '@ipld/dag-cbor': ^8.0.0
       '@ipld/dag-json': ^9.0.1
       '@ipld/schema': ^4.1.2
@@ -70,6 +71,7 @@ importers:
       '@ceramicnetwork/http-client': 2.10.0
       '@ceramicnetwork/stream-tile': 2.9.0
       '@geo-web/types': link:../types
+      '@ipld/car': 3.2.4
       '@ipld/dag-cbor': 8.0.0
       '@ipld/schema': 4.1.2
       '@typescript-eslint/parser': 4.33.0_77fvizpdb3y4icyeo2mf4eo7em

@@ -1,4 +1,4 @@
-// import { Web3Storage } from "web3.storage";
+import { Web3Storage } from "web3.storage";
 import type { IPFS } from "ipfs-core-types";
 import { CeramicApi } from "@ceramicnetwork/common";
 import { ConfigOptions, ParcelOptions } from "../index";
@@ -7,6 +7,7 @@ import { TileDocument } from "@ceramicnetwork/stream-tile";
 import { schema } from "@geo-web/types";
 import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
+
 // @ts-ignore
 import { create } from "@ipld/schema/typed.js";
 
@@ -14,15 +15,19 @@ type SchemaOptions = {
   schema?: string;
 };
 
+type PinOptions = {
+  pin?: boolean;
+};
+
 export class API {
   #ipfs: IPFS;
   #ceramic: CeramicApi;
-  // #web3Storage: Web3Storage;
+  #web3Storage?: Web3Storage;
 
   constructor(opts: ConfigOptions) {
     this.#ipfs = opts.ipfs;
     this.#ceramic = opts.ceramic;
-    // this.#web3Storage = opts.web3Storage;
+    this.#web3Storage = opts.web3Storage;
   }
 
   /*
@@ -158,9 +163,8 @@ export class API {
 
   /*
    * Commit new root to Ceramic
-   *  - Pins CAR
    */
-  async commit(root: CID, opts: ParcelOptions): Promise<void> {
+  async commit(root: CID, opts: ParcelOptions & PinOptions): Promise<void> {
     const doc = await TileDocument.deterministic<Record<string, any>>(
       this.#ceramic,
       {
@@ -169,6 +173,18 @@ export class API {
         tags: [opts.parcelId.toString()],
       }
     );
+
+    if (opts.pin == true) {
+      if (!this.#web3Storage) {
+        throw new Error("Web3Storage not configured");
+      }
+      // Pin entire DAG
+      const car = this.#ipfs.dag.export(root);
+      const reader = await CarReader.fromIterable(car);
+      await this.#web3Storage?.putCar(reader);
+    }
+
+    // Commit to TileDocument
     const bytes = dagjson.encode(root);
     await doc.update(json.decode(bytes));
   }

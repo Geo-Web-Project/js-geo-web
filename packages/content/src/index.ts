@@ -1,5 +1,5 @@
 import { AccountId, AssetId } from "caip";
-// import { Web3Storage } from "web3.storage";
+import { Web3Storage } from "web3.storage";
 import type { IPFS } from "ipfs-core-types";
 import { CeramicApi } from "@ceramicnetwork/common";
 
@@ -13,7 +13,7 @@ export type ParcelOptions = {
 export type ConfigOptions = {
   ipfs: IPFS;
   ceramic: CeramicApi;
-  // web3Storage: Web3Storage;
+  web3Storage?: Web3Storage;
 };
 
 export class GeoWebContent {
