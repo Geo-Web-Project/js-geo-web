@@ -7,7 +7,7 @@ import { TileDocument } from "@ceramicnetwork/stream-tile";
 import { schema } from "@geo-web/types";
 import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
-
+import { CarReader } from "@ipld/car";
 // @ts-ignore
 import { create } from "@ipld/schema/typed.js";
 
