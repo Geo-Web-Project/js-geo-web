@@ -5,6 +5,8 @@ import { ConfigOptions, ParcelOptions } from "../index";
 import { CID } from "multiformats";
 import { TileDocument } from "@ceramicnetwork/stream-tile";
 import { schema } from "@geo-web/types";
+import * as json from "multiformats/codecs/json";
+import * as dagjson from "@ipld/dag-json";
 // @ts-ignore
 import { create } from "@ipld/schema/typed.js";
 
@@ -149,7 +151,6 @@ export class API {
   /*
    * Delete node at path and recursively update all parents from the leaf to the root.
    *  - Returns new root
-   *  - Validates schema + transforms typed -> representation before write
    */
   async deletePath(root: CID, path: string): Promise<CID> {
     return await this.putPath(root, path, null);
@@ -159,5 +160,16 @@ export class API {
    * Commit new root to Ceramic
    *  - Pins CAR
    */
-  // commit(root:CID, opts: ParcelOptions) {}
+  async commit(root: CID, opts: ParcelOptions): Promise<void> {
+    const doc = await TileDocument.deterministic<Record<string, any>>(
+      this.#ceramic,
+      {
+        controllers: [`did:pkh:${opts.ownerId.toString()}`],
+        family: `geo-web-parcel`,
+        tags: [opts.parcelId.toString()],
+      }
+    );
+    const bytes = dagjson.encode(root);
+    await doc.update(json.decode(bytes));
+  }
 }
