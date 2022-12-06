@@ -56,6 +56,30 @@ export class API {
       return result.value;
     }
   }
+  /*
+   * Update CID at path and recursively update all parents from the leaf to the root.
+   *  - Returns new root
+   */
+  async putCid(root: CID, path: string, cid: CID): Promise<CID> {
+    // Base case, path is root
+    if (path === "/" || path === "") {
+      return cid;
+    }
+
+    // 1. Replace CID at first parent
+    const pathSegments = path.split("/");
+    const lastPathSegment = pathSegments[pathSegments.length - 1];
+    const parentPath = path.replace(`/${lastPathSegment}`, "");
+    const { value } = await this.#ipfs.dag.get(root, { path: parentPath });
+    value[lastPathSegment] = cid;
+
+    const newCid = await this.#ipfs.dag.put(value, {
+      storeCodec: "dag-cbor",
+    });
+
+    // 2b. Replace parent CID recursively
+    return this.putCid(root, parentPath, newCid);
+  }
 
   /*
    * Update node at path and recursively update all parents from the leaf to the root.

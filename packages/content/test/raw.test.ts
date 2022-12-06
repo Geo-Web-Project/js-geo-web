@@ -238,3 +238,114 @@ describe("getPath", () => {
     expect(result).toBeUndefined();
   });
 });
+
+describe.only("putCid", () => {
+  beforeAll(async () => {
+    const seed = new Uint8Array(32);
+    const did = new DID({
+      resolver: getResolver(),
+      provider: new Ed25519Provider(seed),
+    });
+    ceramic.did = did;
+
+    const authMethod = await createEthereumAuthMethod();
+    const session = await DIDSession.authorize(authMethod, {
+      resources: [`ceramic://*`],
+    });
+    ceramic.did = session.did;
+
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    // Create DAG
+    const objCid = await ipfs.dag.put(
+      {},
+      {
+        storeCodec: "dag-cbor",
+      }
+    );
+    const mediaGallery = [objCid];
+    const basicProfile = {
+      name: "Hello",
+      url: "http://example.com",
+    };
+
+    const mediaGalleryCid = await ipfs.dag.put(mediaGallery, {
+      storeCodec: "dag-cbor",
+    });
+
+    const basicProfileCid = await ipfs.dag.put(basicProfile, {
+      storeCodec: "dag-cbor",
+    });
+
+    const parcelRoot = {
+      basicProfile: basicProfileCid,
+      mediaGallery: mediaGalleryCid,
+    };
+
+    const parcelRootCid = await ipfs.dag.put(parcelRoot, {
+      storeCodec: "dag-cbor",
+    });
+    const bytes = dagjson.encode(parcelRootCid);
+    const doc = await TileDocument.deterministic<Record<string, any>>(ceramic, {
+      controllers: [session.did.parent],
+      family: `geo-web-parcel`,
+      tags: [parcelId.toString()],
+    });
+    await doc.update(json.decode(bytes));
+  }, 30000);
+
+  test("should put cid at long path", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const result = await gwContent.raw.putCid(
+      rootCid,
+      "/mediaGallery/0",
+      CID.parse("bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u")
+    );
+
+    const { value } = await ipfs.dag.get(result, { path: "/mediaGallery" });
+    expect(value[0].toString()).toEqual(
+      CID.parse(
+        "bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u"
+      ).toString()
+    );
+  }, 30000);
+
+  test("should put cid at short path", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const result = await gwContent.raw.putCid(
+      rootCid,
+      "/mediaGallery",
+      CID.parse("bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u")
+    );
+
+    const { value } = await ipfs.dag.get(result);
+    expect(value["mediaGallery"].toString()).toEqual(
+      CID.parse(
+        "bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u"
+      ).toString()
+    );
+  }, 30000);
+});
