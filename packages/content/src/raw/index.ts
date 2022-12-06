@@ -95,12 +95,20 @@ export class API {
       }
       // Base case, one path left
       if (pathSegments.length == 1) {
-        node[pathSegments[0]] = data;
+        if (data == null) {
+          delete node[pathSegments[0]];
+        } else {
+          node[pathSegments[0]] = data;
+        }
         return node;
       }
       // Base case, one path left with /
       if (pathSegments.length == 2) {
-        node[pathSegments[1]] = data;
+        if (data == null) {
+          delete node[pathSegments[1]];
+        } else {
+          node[pathSegments[1]] = data;
+        }
         return node;
       }
 
@@ -143,7 +151,9 @@ export class API {
    *  - Returns new root
    *  - Validates schema + transforms typed -> representation before write
    */
-  // deletePath(root: CID, path: string, data: any): CID {}
+  async deletePath(root: CID, path: string): Promise<CID> {
+    return await this.putPath(root, path, null);
+  }
 
   /*
    * Commit new root to Ceramic

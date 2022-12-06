@@ -391,3 +391,101 @@ describe("putPath", () => {
     expect(value).toEqual("Hello World");
   }, 30000);
 });
+
+describe("deletePath", () => {
+  beforeAll(async () => {
+    const seed = new Uint8Array(32);
+    const did = new DID({
+      resolver: getResolver(),
+      provider: new Ed25519Provider(seed),
+    });
+    ceramic.did = did;
+
+    const authMethod = await createEthereumAuthMethod();
+    const session = await DIDSession.authorize(authMethod, {
+      resources: [`ceramic://*`],
+    });
+    ceramic.did = session.did;
+
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    // Create DAG
+    const objCid = await ipfs.dag.put(
+      {},
+      {
+        storeCodec: "dag-cbor",
+      }
+    );
+    const mediaGallery = [objCid];
+    const basicProfile = {
+      name: "Hello",
+      url: "http://example.com",
+    };
+
+    const mediaGalleryCid = await ipfs.dag.put(mediaGallery, {
+      storeCodec: "dag-cbor",
+    });
+
+    const basicProfileCid = await ipfs.dag.put(basicProfile, {
+      storeCodec: "dag-cbor",
+    });
+
+    const parcelRoot = {
+      basicProfile: basicProfileCid,
+      mediaGallery: mediaGalleryCid,
+    };
+
+    const parcelRootCid = await ipfs.dag.put(parcelRoot, {
+      storeCodec: "dag-cbor",
+    });
+    const bytes = dagjson.encode(parcelRootCid);
+    const doc = await TileDocument.deterministic<Record<string, any>>(ceramic, {
+      controllers: [session.did.parent],
+      family: `geo-web-parcel`,
+      tags: [parcelId.toString()],
+    });
+    await doc.update(json.decode(bytes));
+  }, 30000);
+
+  test("should delete leaf", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const result = await gwContent.raw.deletePath(
+      rootCid,
+      "/basicProfile/name"
+    );
+
+    const { value } = await ipfs.dag.get(result, { path: "/basicProfile" });
+    expect(value["name"]).toBeUndefined();
+  }, 30000);
+
+  test("should delete node", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const result = await gwContent.raw.deletePath(rootCid, "/basicProfile");
+
+    const { value } = await ipfs.dag.get(result);
+    expect(value["basicProfile"]).toBeUndefined();
+  }, 30000);
+});
