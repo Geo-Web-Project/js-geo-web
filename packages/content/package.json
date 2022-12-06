@@ -1,5 +1,5 @@
 {
-  "name": "@js-geo-web/content",
+  "name": "@geo-web/content",
   "version": "0.1.0",
   "description": "",
   "type": "module",
@@ -25,7 +25,17 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@ipld/schema": "^4.1.2"
+    "@didtools/cacao": "^1.0.0",
+    "@didtools/pkh-ethereum": "^0.0.3",
+    "@ethersproject/wallet": "^5.7.0",
+    "@ipld/dag-json": "^9.0.1",
+    "did-session": "^1.0.0",
+    "dids": "^3.4.0",
+    "events": "^3.3.0",
+    "jest-environment-ceramic": "^0.16.0",
+    "key-did-provider-ed25519": "^2.0.1",
+    "key-did-resolver": "^2.3.0",
+    "uint8arrays": "^4.0.2"
   },
   "jest": {
     "extensionsToTreatAsEsm": [
@@ -42,5 +52,21 @@
         }
       ]
     }
+  },
+  "dependencies": {
+    "@ceramicnetwork/common": "^2.13.0",
+    "@ceramicnetwork/http-client": "^2.10.0",
+    "@ceramicnetwork/stream-tile": "^2.9.0",
+    "@geo-web/types": "workspace:^0.1.0",
+    "@ipld/dag-cbor": "^8.0.0",
+    "@ipld/schema": "^4.1.2",
+    "@typescript-eslint/parser": "^4.33.0",
+    "caip": "^1.1.0",
+    "eslint": "^7.32.0",
+    "ipfs-core": "0.14.3",
+    "ipfs-core-types": "^0.13.0",
+    "multiformats": "^10.0.2",
+    "typescript": "^4.9.3",
+    "web3.storage": "^4.4.0"
   }
 }
