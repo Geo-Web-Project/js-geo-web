@@ -46,7 +46,7 @@ importers:
       '@didtools/cacao': ^1.0.0
       '@didtools/pkh-ethereum': ^0.0.3
       '@ethersproject/wallet': ^5.7.0
-      '@geo-web/types': workspace:^0.1.2
+      '@geo-web/types': workspace:^0.1.3
       '@ipld/car': 3.2.4
       '@ipld/dag-cbor': ^8.0.0
       '@ipld/dag-json': ^9.0.1

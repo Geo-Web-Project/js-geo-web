@@ -54,7 +54,28 @@ export class API {
     opts: ParcelOptions & SchemaOptions
   ): Promise<any> {
     const root = await this.resolveRoot(opts);
-    const result = await this.#ipfs.dag.get(root, { path });
+
+    let result: any;
+    try {
+      result = await this.#ipfs.dag.get(root, { path, timeout: 2000 });
+    } catch (e) {
+      if (this.#web3Storage) {
+        // Download DAG
+        const res = await this.#web3Storage.get(root.toString());
+        const buffer = await res!.arrayBuffer();
+        const uintBuffer = new Uint8Array(buffer);
+        const importResult = this.#ipfs.dag.import(
+          (async function* () {
+            yield uintBuffer;
+          })()
+        );
+
+        for await (const _ of importResult) {
+        }
+
+        result = await this.#ipfs.dag.get(root, { path });
+      }
+    }
 
     if (opts.schema) {
       const schemaTyped = create(schema, opts.schema);
