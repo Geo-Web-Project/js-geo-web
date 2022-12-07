@@ -1,5 +1,6 @@
-import { ParcelRoot, schema } from "../src";
+import { ParcelRoot } from "../src";
 import { CID } from "multiformats/cid";
+import { schema } from "../src";
 // @ts-ignore
 import { create } from "@ipld/schema/typed.js";
 

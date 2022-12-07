@@ -1,5 +1,6 @@
-import { MediaGallery, MediaObject, schema } from "../src";
+import { MediaGallery, MediaObject } from "../src";
 import { CID } from "multiformats/cid";
+import { schema } from "../src";
 // @ts-ignore
 import { create } from "@ipld/schema/typed.js";
 

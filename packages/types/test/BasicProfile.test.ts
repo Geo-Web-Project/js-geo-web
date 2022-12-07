@@ -1,4 +1,6 @@
-import { BasicProfile, schema } from "../src";
+import { BasicProfile } from "../src";
+import { schema } from "../src";
+
 // @ts-ignore
 import { create } from "@ipld/schema/typed.js";
 
