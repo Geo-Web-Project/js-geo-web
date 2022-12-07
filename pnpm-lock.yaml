@@ -46,12 +46,13 @@ importers:
       '@didtools/cacao': ^1.0.0
       '@didtools/pkh-ethereum': ^0.0.3
       '@ethersproject/wallet': ^5.7.0
-      '@geo-web/types': workspace:^0.1.2
+      '@geo-web/types': workspace:^0.1.3
       '@ipld/car': 3.2.4
       '@ipld/dag-cbor': ^8.0.0
       '@ipld/dag-json': ^9.0.1
       '@ipld/schema': ^4.1.2
       '@typescript-eslint/parser': ^4.33.0
+      axios: ^1.2.1
       caip: ^1.1.0
       did-session: ^1.0.0
       dids: ^3.4.0
@@ -75,6 +76,7 @@ importers:
       '@ipld/dag-cbor': 8.0.0
       '@ipld/schema': 4.1.2
       '@typescript-eslint/parser': 4.33.0_77fvizpdb3y4icyeo2mf4eo7em
+      axios: 1.2.1
       caip: 1.1.0
       eslint: 7.32.0
       ipfs-core: 0.14.3_node-fetch@2.6.7
@@ -3077,6 +3079,16 @@ packages:
       - debug
     dev: true
 
+  /axios/1.2.1:
+    resolution: {integrity: sha512-I88cFiGu9ryt/tfVEi4kX2SITsvDddTajXTOFmt2uK1ZVA8LytjtdeyefdQWEf5PU8w+4SSJDoYnggflB5tW4A==}
+    dependencies:
+      follow-redirects: 1.15.2
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
   /babel-jest/29.3.1_@babel+core@7.20.5:
     resolution: {integrity: sha512-aard+xnMoxgjwV70t0L6wkW/3HQQtV+O0PEimxKgzNqCJnbYmroPojdP2tqKSOAt8QAKV/uSZU8851M7B5+fcA==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -4898,7 +4910,6 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
-    dev: true
 
   /for-each/0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
@@ -4916,6 +4927,15 @@ packages:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.35
+
+  /form-data/4.0.0:
+    resolution: {integrity: sha512-ETEklSGi5t0QMZuiXoA/Q6vcnxcLQP5vdugSpuAyi6SVGi2clPPp+xgEhuMaHC+zGgn31Kd235W35f7Hykkaww==}
+    engines: {node: '>= 6'}
+    dependencies:
+      asynckit: 0.4.0
+      combined-stream: 1.0.8
+      mime-types: 2.1.35
+    dev: false
 
   /fs-minipass/2.1.0:
     resolution: {integrity: sha512-V/JgOLFCS+R6Vcq0slCuaeWEdNC3ouDlJMNIsacH2VtALiu9mV4LPrHc5cDl8k5aw6J8jwgWWpiTo5RYhmIzvg==}
@@ -8777,6 +8797,10 @@ packages:
       '@protobufjs/utf8': 1.1.0
       '@types/node': 18.11.10
       long: 5.2.1
+    dev: false
+
+  /proxy-from-env/1.1.0:
+    resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
     dev: false
 
   /prr/1.0.1:
