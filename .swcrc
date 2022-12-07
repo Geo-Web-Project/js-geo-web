@@ -3,6 +3,9 @@
     "parser": {
       "syntax": "typescript"
     },
-    "target": "es2020"
+    "target": "es2020",
+    "experimental": {
+      "keepImportAssertions": true
+    }
   }
 }

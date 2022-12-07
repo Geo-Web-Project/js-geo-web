@@ -1,6 +1,6 @@
 {
   "name": "@geo-web/types",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "",
   "type": "module",
   "main": "dist/index.js",
@@ -14,7 +14,7 @@
   "scripts": {
     "build:clean": "del dist",
     "build:js": "swc src -d ./dist --config-file ../../.swcrc",
-    "build:schema": "ipld-schema to-json schema/*.md > schema/schema.json",
+    "build:schema": "ipld-schema to-json schema/*.md > schema/schema.json && cp ./schema/schema.json ./src/schema.json",
     "build:types": "tsc --emitDeclarationOnly --skipLibCheck",
     "build": "pnpm build:clean && pnpm build:schema && pnpm build:types && pnpm build:js && cp ./src/schema.json ./dist/schema.json",
     "lint": "eslint src/* test/* --fix",

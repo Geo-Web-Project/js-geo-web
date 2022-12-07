@@ -1,3 +1,3 @@
-import schemafile from "./schema.json" assert { type: "json" };
+import schema from "./schema.json" assert { type: "json" };
 
-export const schema = schemafile;
+export { schema };
