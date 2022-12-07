@@ -3,7 +3,7 @@ import { Web3Storage } from "web3.storage";
 import type { IPFS } from "ipfs-core-types";
 import { CeramicApi } from "@ceramicnetwork/common";
 
-import { API as RawAPI } from "./raw";
+import { API as RawAPI } from "./raw/index";
 
 export type ParcelOptions = {
   parcelId: AssetId;
