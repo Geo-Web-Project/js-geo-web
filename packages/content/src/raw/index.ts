@@ -46,15 +46,14 @@ export class API {
   }
 
   /*
-   * Retrieves IPLD object at path
+   * Retrieves IPLD object at path from any root
    *  - Validates schema + transforms representation -> typed before read
    */
-  async getPath(
+  async get(
+    root: CID,
     path: string,
     opts: ParcelOptions & SchemaOptions
   ): Promise<any> {
-    const root = await this.resolveRoot(opts);
-
     let result: any;
     try {
       result = await this.#ipfs.dag.get(root, { path, timeout: 2000 });
@@ -83,6 +82,19 @@ export class API {
     } else {
       return result.value;
     }
+  }
+
+  /*
+   * Retrieves IPLD object at path from parcel root
+   *  - Validates schema + transforms representation -> typed before read
+   */
+  async getPath(
+    path: string,
+    opts: ParcelOptions & SchemaOptions
+  ): Promise<any> {
+    const root = await this.resolveRoot(opts);
+
+    return await this.get(root, path, opts);
   }
 
   /*
