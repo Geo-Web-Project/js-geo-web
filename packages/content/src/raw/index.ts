@@ -49,11 +49,7 @@ export class API {
    * Retrieves IPLD object at path from any root
    *  - Validates schema + transforms representation -> typed before read
    */
-  async get(
-    root: CID,
-    path: string,
-    opts: ParcelOptions & SchemaOptions
-  ): Promise<any> {
+  async get(root: CID, path: string, opts: SchemaOptions): Promise<any> {
     let result: any;
     try {
       result = await this.#ipfs.dag.get(root, { path, timeout: 2000 });
