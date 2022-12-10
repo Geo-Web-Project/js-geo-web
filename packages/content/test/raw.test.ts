@@ -15,7 +15,7 @@ import { DID } from "dids";
 import { getResolver } from "key-did-resolver";
 import { EthereumNodeAuth } from "@didtools/pkh-ethereum";
 import { AuthMethod } from "@didtools/cacao";
-import { CID } from "multiformats/cid";
+import { CID } from "multiformats";
 import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
 import { Web3Storage } from "web3.storage";
@@ -395,7 +395,41 @@ describe("putPath", () => {
     expect(value).toEqual("World");
   }, 30000);
 
-  test("should put with schema", async () => {
+  test("should put with parent schema", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const basicProfileCid = await ipfs.dag.put(
+      {
+        name: "Hello World",
+      },
+      {
+        storeCodec: "dag-cbor",
+      }
+    );
+
+    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const result = await gwContent.raw.putPath(
+      rootCid,
+      "/basicProfile",
+      basicProfileCid,
+      { parentSchema: "ParcelRoot" }
+    );
+
+    const { value } = await ipfs.dag.get(result, {
+      path: "/basicProfile/name",
+    });
+    expect(value).toEqual("Hello World");
+  }, 30000);
+
+  test("should put node at cid", async () => {
     const parcelId = new AssetId(
       AssetId.parse(
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
@@ -413,8 +447,11 @@ describe("putPath", () => {
       {
         name: "Hello World",
       },
-      { schema: "BasicProfile" }
+      { parentSchema: "ParcelRoot", leafSchema: "BasicProfile" }
     );
+
+    const { value: parentValue } = await ipfs.dag.get(result);
+    expect(CID.asCID(parentValue["basicProfile"])).toBeDefined();
 
     const { value } = await ipfs.dag.get(result, {
       path: "/basicProfile/name",
@@ -446,7 +483,7 @@ describe("putPath", () => {
       {
         name: "Hello World",
       },
-      { schema: "BasicProfile" }
+      { parentSchema: "ParcelRoot", leafSchema: "BasicProfile" }
     );
 
     await gwContent.raw.commit(result, { ownerId, parcelId, pin: true });
@@ -630,7 +667,7 @@ describe("commit", () => {
       {
         name: "Hello World",
       },
-      { schema: "BasicProfile" }
+      { parentSchema: "ParcelRoot", leafSchema: "BasicProfile" }
     );
 
     await gwContent.raw.commit(result, { ownerId, parcelId });
