@@ -15,6 +15,11 @@ type SchemaOptions = {
   schema?: string;
 };
 
+type LeafSchemaOptions = {
+  parentSchema?: string;
+  leafSchema?: string;
+};
+
 type PinOptions = {
   pin?: boolean;
 };
@@ -28,6 +33,14 @@ export class API {
     this.#ipfs = opts.ipfs;
     this.#ceramic = opts.ceramic;
     this.#web3Storage = opts.web3Storage;
+  }
+
+  /*
+   * Initialize empty content root
+   */
+  async initRoot(opts: ParcelOptions): Promise<void> {
+    const emptyRoot = await this.#ipfs.dag.put({}, { storeCodec: "dag-cbor" });
+    return await this.commit(emptyRoot, opts);
   }
 
   /*
@@ -102,14 +115,14 @@ export class API {
     root: CID,
     path: string,
     data: any,
-    opts?: SchemaOptions
+    opts?: LeafSchemaOptions
   ): Promise<CID> {
     let newData = data;
-    if (opts?.schema) {
-      const schemaTyped = create(schema, opts.schema);
+    if (opts?.leafSchema) {
+      const schemaTyped = create(schema, opts.leafSchema);
       const newData = schemaTyped.toRepresentation(data);
       if (newData === undefined) {
-        throw new TypeError("Invalid data form, does not match schema");
+        throw new TypeError("Invalid data form, does not match leafSchema");
       }
     }
 
@@ -161,10 +174,44 @@ export class API {
     if (remainderPath === "" || remainderPath == undefined) {
       // Replace leaf
       newValue = putInnerPath(value, `/${lastPathSegment}`, newData);
+      if (opts?.parentSchema) {
+        const schemaTyped = create(schema, opts.parentSchema);
+        let newDataRepresentation = schemaTyped.toRepresentation(newValue);
+        if (newDataRepresentation === undefined) {
+          // Try again with a Link
+          const newDataLink = await this.#ipfs.dag.put(newData, {
+            storeCodec: "dag-cbor",
+          });
+          newValue = putInnerPath(value, `/${lastPathSegment}`, newDataLink);
+          newDataRepresentation = schemaTyped.toRepresentation(newValue);
+          if (newDataRepresentation === undefined) {
+            throw new TypeError(
+              "Invalid data form, does not match parentSchema"
+            );
+          }
+        }
+      }
     } else {
       // Replace nested leaf
       const nestedPath = `/${remainderPath}/${lastPathSegment}`;
       newValue = putInnerPath(value, nestedPath, newData);
+      if (opts?.parentSchema) {
+        const schemaTyped = create(schema, opts.parentSchema);
+        let newDataRepresentation = schemaTyped.toRepresentation(newValue);
+        if (newDataRepresentation === undefined) {
+          // Try again with a Link
+          const newDataLink = await this.#ipfs.dag.put(newData, {
+            storeCodec: "dag-cbor",
+          });
+          newValue = putInnerPath(value, nestedPath, newDataLink);
+          newDataRepresentation = schemaTyped.toRepresentation(newValue);
+          if (newDataRepresentation === undefined) {
+            throw new TypeError(
+              "Invalid data form, does not match parentSchema"
+            );
+          }
+        }
+      }
 
       parentPath = parentPath.replace(remainderPath, "");
     }
