@@ -36,6 +36,14 @@ export class API {
   }
 
   /*
+   * Initialize empty content root
+   */
+  async initRoot(opts: ParcelOptions): Promise<void> {
+    const emptyRoot = await this.#ipfs.dag.put({}, { storeCodec: "dag-cbor" });
+    return await this.commit(emptyRoot, opts);
+  }
+
+  /*
    * Resolve content root
    */
   async resolveRoot(opts: ParcelOptions): Promise<CID> {
