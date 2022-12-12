@@ -520,7 +520,7 @@ describe("deletePath", () => {
         storeCodec: "dag-cbor",
       }
     );
-    const mediaGallery = [objCid];
+    const mediaGallery = [objCid, objCid];
     const basicProfile = {
       name: "Hello",
       url: "http://example.com",
@@ -572,6 +572,45 @@ describe("deletePath", () => {
     expect(value["name"]).toBeUndefined();
   }, 30000);
 
+  test("should delete from list", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const result = await gwContent.raw.deletePath(rootCid, "/mediaGallery/0");
+
+    const { value } = await ipfs.dag.get(result, { path: "/mediaGallery" });
+    expect(value.length).toEqual(1);
+  }, 30000);
+
+  test("should delete from list with schema", async () => {
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
+    );
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const result = await gwContent.raw.deletePath(rootCid, "/mediaGallery/0", {
+      parentSchema: "MediaGallery",
+    });
+
+    const { value } = await ipfs.dag.get(result, { path: "/mediaGallery" });
+    console.log(value);
+    expect(value.length).toEqual(1);
+  }, 30000);
+
   test("should delete node", async () => {
     const parcelId = new AssetId(
       AssetId.parse(
@@ -584,7 +623,9 @@ describe("deletePath", () => {
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
-    const result = await gwContent.raw.deletePath(rootCid, "/basicProfile");
+    const result = await gwContent.raw.deletePath(rootCid, "/basicProfile", {
+      parentSchema: "ParcelRoot",
+    });
 
     const { value } = await ipfs.dag.get(result);
     expect(value["basicProfile"]).toBeUndefined();
