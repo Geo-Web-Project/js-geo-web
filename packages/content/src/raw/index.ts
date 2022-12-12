@@ -70,14 +70,15 @@ export class API {
       if (this.#web3Storage) {
         // Download DAG
         const res = await this.#web3Storage.get(root.toString());
-        const buffer = await res!.arrayBuffer();
-        const uintBuffer = new Uint8Array(buffer);
+        const buffer = await res?.arrayBuffer();
+        const uintBuffer = buffer ? new Uint8Array(buffer) : new Uint8Array();
         const importResult = this.#ipfs.dag.import(
           (async function* () {
             yield uintBuffer;
           })()
         );
 
+        // eslint-disable-next-line no-empty
         for await (const _ of importResult) {
         }
 
@@ -120,7 +121,7 @@ export class API {
     let newData = data;
     if (opts?.leafSchema) {
       const schemaTyped = create(schema, opts.leafSchema);
-      const newData = schemaTyped.toRepresentation(data);
+      newData = schemaTyped.toRepresentation(data);
       if (newData === undefined) {
         throw new TypeError("Invalid data form, does not match leafSchema");
       }
@@ -139,11 +140,11 @@ export class API {
       const pathSegments = path.split("/");
 
       // Base case, no path or root
-      if (pathSegments.length == 2 && pathSegments[1] === "") {
+      if (pathSegments.length === 2 && pathSegments[1] === "") {
         return node;
       }
       // Base case, one path left
-      if (pathSegments.length == 1) {
+      if (pathSegments.length === 1) {
         if (data == null) {
           delete node[pathSegments[0]];
         } else {
@@ -152,7 +153,7 @@ export class API {
         return node;
       }
       // Base case, one path left with /
-      if (pathSegments.length == 2) {
+      if (pathSegments.length === 2) {
         if (data == null) {
           delete node[pathSegments[1]];
         } else {
@@ -171,13 +172,17 @@ export class API {
     }
 
     let newValue;
-    if (remainderPath === "" || remainderPath == undefined) {
+    if (remainderPath === "" || remainderPath === undefined) {
       // Replace leaf
       newValue = putInnerPath(value, `/${lastPathSegment}`, newData);
+      // Filter undefined from arrays
+      if (Array.isArray(newValue)) {
+        newValue = newValue.filter((v) => v);
+      }
       if (opts?.parentSchema) {
         const schemaTyped = create(schema, opts.parentSchema);
         let newDataRepresentation = schemaTyped.toRepresentation(newValue);
-        if (newDataRepresentation === undefined) {
+        if (newValue && newDataRepresentation === undefined) {
           // Try again with a Link
           const newDataLink = await this.#ipfs.dag.put(newData, {
             storeCodec: "dag-cbor",
@@ -195,10 +200,14 @@ export class API {
       // Replace nested leaf
       const nestedPath = `/${remainderPath}/${lastPathSegment}`;
       newValue = putInnerPath(value, nestedPath, newData);
+      // Filter undefined from arrays
+      if (Array.isArray(newValue)) {
+        newValue = newValue.filter((v) => v);
+      }
       if (opts?.parentSchema) {
         const schemaTyped = create(schema, opts.parentSchema);
         let newDataRepresentation = schemaTyped.toRepresentation(newValue);
-        if (newDataRepresentation === undefined) {
+        if (newValue && newDataRepresentation === undefined) {
           // Try again with a Link
           const newDataLink = await this.#ipfs.dag.put(newData, {
             storeCodec: "dag-cbor",
@@ -233,8 +242,12 @@ export class API {
    * Delete node at path and recursively update all parents from the leaf to the root.
    *  - Returns new root
    */
-  async deletePath(root: CID, path: string): Promise<CID> {
-    return await this.putPath(root, path, null);
+  async deletePath(
+    root: CID,
+    path: string,
+    opts?: LeafSchemaOptions
+  ): Promise<CID> {
+    return await this.putPath(root, path, null, opts);
   }
 
   /*
@@ -250,7 +263,7 @@ export class API {
       }
     );
 
-    if (opts.pin == true) {
+    if (opts.pin) {
       if (!this.#web3Storage) {
         throw new Error("Web3Storage not configured");
       }
