@@ -107,6 +107,29 @@ describe("resolveRoot", () => {
     const result = await gwContent.raw.resolveRoot({ ownerId, parcelId });
     expect(result).toEqual(cid);
   });
+
+  test("should resolve empty root", async () => {
+    const authMethod = await createEthereumAuthMethod();
+    const session = await DIDSession.authorize(authMethod, {
+      resources: [`ceramic://*`],
+    });
+    ceramic.did = session.did;
+
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(session.did.parent.split("did:pkh:")[1])
+    );
+
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const emptyRoot = await ipfs.dag.put({}, { storeCodec: "dag-cbor" });
+
+    const result = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    expect(result).toEqual(emptyRoot);
+  });
 });
 
 describe("getPath", () => {
@@ -452,6 +475,47 @@ describe("putPath", () => {
 
     const { value: parentValue } = await ipfs.dag.get(result);
     expect(CID.asCID(parentValue["basicProfile"])).toBeDefined();
+
+    const { value } = await ipfs.dag.get(result, {
+      path: "/basicProfile/name",
+    });
+    expect(value).toEqual("Hello World");
+  }, 30000);
+
+  test("should put on empty root", async () => {
+    const authMethod = await createEthereumAuthMethod();
+    const session = await DIDSession.authorize(authMethod, {
+      resources: [`ceramic://*`],
+    });
+    ceramic.did = session.did;
+
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerId = new AccountId(
+      AccountId.parse(session.did.parent.split("did:pkh:")[1])
+    );
+
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const basicProfileCid = await ipfs.dag.put(
+      {
+        name: "Hello World",
+      },
+      {
+        storeCodec: "dag-cbor",
+      }
+    );
+
+    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const result = await gwContent.raw.putPath(
+      rootCid,
+      "/basicProfile",
+      basicProfileCid,
+      { parentSchema: "ParcelRoot" }
+    );
 
     const { value } = await ipfs.dag.get(result, {
       path: "/basicProfile/name",

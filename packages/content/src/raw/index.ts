@@ -55,7 +55,16 @@ export class API {
         tags: [opts.parcelId.toString()],
       }
     );
-    return CID.parse(doc.content["/"]);
+    if (doc.content["/"]) {
+      return CID.parse(doc.content["/"]);
+    } else {
+      // Empty root
+      const emptyRoot = await this.#ipfs.dag.put(
+        {},
+        { storeCodec: "dag-cbor" }
+      );
+      return emptyRoot;
+    }
   }
 
   /*
