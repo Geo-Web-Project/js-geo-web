@@ -28,7 +28,7 @@ type PinOptions = {
 
 export class API {
   #ipfs: IPFS;
-  #ipfsGatewayHost: string;
+  #ipfsGatewayHost?: string;
   #ceramic: CeramicApi;
   #web3Storage?: Web3Storage;
 
