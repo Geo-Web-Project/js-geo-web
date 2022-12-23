@@ -12,6 +12,7 @@ export type ParcelOptions = {
 
 export type ConfigOptions = {
   ipfs: IPFS;
+  ipfsGatewayHost?: string;
   ceramic: CeramicApi;
   web3Storage?: Web3Storage;
 };
