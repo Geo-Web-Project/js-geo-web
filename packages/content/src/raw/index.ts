@@ -81,21 +81,25 @@ export class API {
       result = await this.#ipfs.dag.get(root, { path, timeout: 2000 });
     } catch (e) {
       if (this.#ipfsGatewayHost) {
-        // Download raw block
-        console.debug(
-          `Retrieving raw block from: ${
-            this.#ipfsGatewayHost
-          }/ipfs/${root.toString()}`
-        );
-        const rawBlock = await axios.get(
-          `${this.#ipfsGatewayHost}/ipfs/${root.toString()}`,
-          {
-            responseType: "arraybuffer",
-            headers: { Accept: "application/vnd.ipld.raw" },
-          }
-        );
-        const uintBuffer = new Uint8Array(rawBlock.data);
-        await this.#ipfs.block.put(uintBuffer);
+        try {
+          // Download raw block
+          console.debug(
+            `Retrieving raw block from: ${
+              this.#ipfsGatewayHost
+            }/ipfs/${root.toString()}`
+          );
+          const rawBlock = await axios.get(
+            `${this.#ipfsGatewayHost}/ipfs/${root.toString()}`,
+            {
+              responseType: "arraybuffer",
+              headers: { Accept: "application/vnd.ipld.raw" },
+            }
+          );
+          const uintBuffer = new Uint8Array(rawBlock.data);
+          await this.#ipfs.block.put(uintBuffer);
+        } catch (e) {
+          console.warn(`Could not retrieve raw block: ` + e);
+        }
 
         result = await this.#ipfs.dag.get(root, { path });
       }
