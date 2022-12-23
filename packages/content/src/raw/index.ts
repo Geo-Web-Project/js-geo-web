@@ -8,6 +8,8 @@ import { schema } from "@geo-web/types";
 import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
 import { CarReader } from "@ipld/car";
+import { default as axios } from "axios";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { create } from "@ipld/schema/typed.js";
 
@@ -26,11 +28,13 @@ type PinOptions = {
 
 export class API {
   #ipfs: IPFS;
+  #ipfsGatewayHost: string;
   #ceramic: CeramicApi;
   #web3Storage?: Web3Storage;
 
   constructor(opts: ConfigOptions) {
     this.#ipfs = opts.ipfs;
+    this.#ipfsGatewayHost = opts.ipfsGatewayHost;
     this.#ceramic = opts.ceramic;
     this.#web3Storage = opts.web3Storage;
   }
@@ -76,20 +80,22 @@ export class API {
     try {
       result = await this.#ipfs.dag.get(root, { path, timeout: 2000 });
     } catch (e) {
-      if (this.#web3Storage) {
-        // Download DAG
-        const res = await this.#web3Storage.get(root.toString());
-        const buffer = await res?.arrayBuffer();
-        const uintBuffer = buffer ? new Uint8Array(buffer) : new Uint8Array();
-        const importResult = this.#ipfs.dag.import(
-          (async function* () {
-            yield uintBuffer;
-          })()
+      if (this.#ipfsGatewayHost) {
+        // Download raw block
+        console.debug(
+          `Retrieving raw block from: ${
+            this.#ipfsGatewayHost
+          }/ipfs/${root.toString()}`
         );
-
-        // eslint-disable-next-line no-empty
-        for await (const _ of importResult) {
-        }
+        const rawBlock = await axios.get(
+          `${this.#ipfsGatewayHost}/ipfs/${root.toString()}`,
+          {
+            responseType: "arraybuffer",
+            headers: { Accept: "application/vnd.ipld.raw" },
+          }
+        );
+        const uintBuffer = new Uint8Array(rawBlock.data);
+        await this.#ipfs.block.put(uintBuffer);
 
         result = await this.#ipfs.dag.get(root, { path });
       }

@@ -274,15 +274,13 @@ describe("getPath", () => {
     const gwContent = new GeoWebContent({
       ceramic,
       ipfs,
-      web3Storage: new Web3Storage({
-        token: "",
-      }),
+      ipfsGatewayHost: "https://w3s.link",
     });
 
-    await gwContent.raw.commit(
-      CID.parse("bafyreidpdi3nm377aepkqlagkzzusyq5lj4uyya7phthqwaiiiimognnua"),
-      { parcelId, ownerId }
+    const rootCid = CID.parse(
+      "bafyreidpdi3nm377aepkqlagkzzusyq5lj4uyya7phthqwaiiiimognnua"
     );
+    await gwContent.raw.commit(rootCid, { parcelId, ownerId });
 
     const result = await gwContent.raw.getPath("/mediaGallery", {
       ownerId,
