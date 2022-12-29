@@ -47,10 +47,9 @@ importers:
       '@didtools/pkh-ethereum': ^0.0.3
       '@ethersproject/wallet': ^5.7.0
       '@geo-web/types': workspace:^0.1.3
-      '@ipld/car': 3.2.4
+      '@ipld/car': ^5.0.1
       '@ipld/dag-cbor': ^8.0.0
       '@ipld/dag-json': ^9.0.1
-      '@ipld/garbage': ^6.0.0
       '@ipld/schema': ^4.1.2
       '@typescript-eslint/parser': ^4.33.0
       axios: ^1.2.1
@@ -73,7 +72,7 @@ importers:
       '@ceramicnetwork/http-client': 2.10.0
       '@ceramicnetwork/stream-tile': 2.9.0
       '@geo-web/types': link:../types
-      '@ipld/car': 3.2.4
+      '@ipld/car': 5.0.1
       '@ipld/dag-cbor': 8.0.0
       '@ipld/schema': 4.1.2
       '@typescript-eslint/parser': 4.33.0_77fvizpdb3y4icyeo2mf4eo7em
@@ -90,7 +89,6 @@ importers:
       '@didtools/pkh-ethereum': 0.0.3
       '@ethersproject/wallet': 5.7.0
       '@ipld/dag-json': 9.0.1
-      '@ipld/garbage': 6.0.0
       did-session: 1.0.0
       dids: 3.4.0
       events: 3.3.0
@@ -1203,6 +1201,16 @@ packages:
       multiformats: 9.9.0
       varint: 6.0.0
 
+  /@ipld/car/5.0.1:
+    resolution: {integrity: sha512-YPXr1TztVmTPE4MerjKpFMuIll73MqvEakzWDMqj4uGJnwkY+tE0SlBGmqkMSofOgVMQAxZ6JtuRA93WlTzb8w==}
+    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
+    dependencies:
+      '@ipld/dag-cbor': 8.0.0
+      cborg: 1.9.6
+      multiformats: 10.0.2
+      varint: 6.0.0
+    dev: false
+
   /@ipld/dag-cbor/6.0.15:
     resolution: {integrity: sha512-Vm3VTSTwlmGV92a3C5aeY+r2A18zbH2amehNhsX8PBa3muXICaWrN8Uri85A5hLH7D7ElhE8PdjxD6kNqUmTZA==}
     dependencies:
@@ -1248,13 +1256,6 @@ packages:
     dependencies:
       multiformats: 10.0.2
     dev: false
-
-  /@ipld/garbage/6.0.0:
-    resolution: {integrity: sha512-Y5U5mJSZ1CQjfGoyLRaa4EatyiC3HQ1OZU2VVIxlJxqCmaFIRpXHjiUchJuEYR7edEVYwBtBgFCmHJh4Xp4t/w==}
-    engines: {node: '>=16.0.0', npm: '>=7.0.0'}
-    dependencies:
-      multiformats: 10.0.2
-    dev: true
 
   /@ipld/schema/4.1.2:
     resolution: {integrity: sha512-PeBrDFzoIlwaKZ8JmwhN76xSIN2hNt9OhHwymJMWKw+s9YGxbsYAPhlB50tTq5zCkt9Hat++iX9VVif8uBG8Rw==}

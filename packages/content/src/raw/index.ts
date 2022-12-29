@@ -7,7 +7,10 @@ import { TileDocument } from "@ceramicnetwork/stream-tile";
 import { schema } from "@geo-web/types";
 import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
-import { CarReader } from "@ipld/car";
+import { CarWriter, CarReader } from "@ipld/car";
+import * as Block from "multiformats/block";
+import { sha256 as hasher } from "multiformats/hashes/sha2";
+import * as dagcbor from "@ipld/dag-cbor";
 import { default as axios } from "axios";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -135,8 +138,9 @@ export class API {
     root: CID,
     path: string,
     data: any,
-    opts?: LeafSchemaOptions
+    opts?: LeafSchemaOptions & PinOptions
   ): Promise<CID> {
+    console.log("Put path: ", root.toString(), path);
     let newData = data;
     if (opts?.leafSchema) {
       const schemaTyped = create(schema, opts.leafSchema);
@@ -190,6 +194,7 @@ export class API {
       return node;
     }
 
+    const innerBlocks = [];
     let newValue;
     if (remainderPath === "" || remainderPath === undefined) {
       // Replace leaf
@@ -206,6 +211,13 @@ export class API {
           const newDataLink = await this.#ipfs.dag.put(newData, {
             storeCodec: "dag-cbor",
           });
+          const block = await Block.encode({
+            value: newData,
+            codec: dagcbor,
+            hasher,
+          });
+          innerBlocks.push(block);
+          console.log("newDataLink 1: " + newDataLink.toString());
           newValue = putInnerPath(value, `/${lastPathSegment}`, newDataLink);
           newDataRepresentation = schemaTyped.toRepresentation(newValue);
           if (newDataRepresentation === undefined) {
@@ -231,6 +243,12 @@ export class API {
           const newDataLink = await this.#ipfs.dag.put(newData, {
             storeCodec: "dag-cbor",
           });
+          const block = await Block.encode({
+            value: newData,
+            codec: dagcbor,
+            hasher,
+          });
+          innerBlocks.push(block);
           newValue = putInnerPath(value, nestedPath, newDataLink);
           newDataRepresentation = schemaTyped.toRepresentation(newValue);
           if (newDataRepresentation === undefined) {
@@ -248,13 +266,45 @@ export class API {
       storeCodec: "dag-cbor",
     });
 
+    if (opts?.pin) {
+      if (!this.#web3Storage) {
+        throw new Error("Web3Storage not configured");
+      }
+
+      console.log("Pin: " + newCid.toString());
+
+      // Build CAR
+      const block = await Block.encode({
+        value: newValue,
+        codec: dagcbor,
+        hasher,
+      });
+      console.log(newValue);
+
+      const { writer, out } = CarWriter.create([newCid as any]);
+      writer.put({ cid: newCid as any, bytes: block.bytes });
+      innerBlocks.forEach((innerBlock) => {
+        writer.put({ cid: innerBlock.cid as any, bytes: innerBlock.bytes });
+      });
+      writer.close();
+
+      console.log("Getting reader...");
+
+      const reader = await CarReader.fromIterable(out);
+      console.log("Putting car...");
+
+      await this.#web3Storage?.putCar(reader);
+
+      console.log("Put car.");
+    }
+
     // 2a. Base case, path is root
     if (parentPath === "/" || parentPath === "") {
       return newCid;
     }
 
     // 2b. Replace parent CID recursively
-    return this.putPath(root, parentPath, newCid);
+    return this.putPath(root, parentPath, newCid, { pin: opts?.pin });
   }
 
   /*
@@ -272,7 +322,7 @@ export class API {
   /*
    * Commit new root to Ceramic
    */
-  async commit(root: CID, opts: ParcelOptions & PinOptions): Promise<void> {
+  async commit(root: CID, opts: ParcelOptions): Promise<void> {
     const doc = await TileDocument.deterministic<Record<string, any>>(
       this.#ceramic,
       {
@@ -281,16 +331,6 @@ export class API {
         tags: [opts.parcelId.toString()],
       }
     );
-
-    if (opts.pin) {
-      if (!this.#web3Storage) {
-        throw new Error("Web3Storage not configured");
-      }
-      // Pin entire DAG
-      const car = this.#ipfs.dag.export(root);
-      const reader = await CarReader.fromIterable(car);
-      await this.#web3Storage?.putCar(reader);
-    }
 
     // Commit to TileDocument
     const bytes = dagjson.encode(root);

@@ -521,7 +521,7 @@ describe("putPath", () => {
     expect(value).toEqual("Hello World");
   }, 30000);
 
-  test.skip("should pin", async () => {
+  test.only("should pin", async () => {
     const parcelId = new AssetId(
       AssetId.parse(
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
@@ -545,13 +545,18 @@ describe("putPath", () => {
       {
         name: "Hello World",
       },
-      { parentSchema: "ParcelRoot", leafSchema: "BasicProfile" }
+      { parentSchema: "ParcelRoot", leafSchema: "BasicProfile", pin: true }
     );
 
-    await gwContent.raw.commit(result, { ownerId, parcelId, pin: true });
+    console.log("GET: " + result.toString());
 
-    const newRootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
-    expect(newRootCid.toString()).toEqual(result.toString());
+    const { value: parentValue } = await ipfs.dag.get(result);
+    expect(CID.asCID(parentValue["basicProfile"])).toBeDefined();
+
+    const { value } = await ipfs.dag.get(result, {
+      path: "/basicProfile/name",
+    });
+    expect(value).toEqual("Hello World");
   }, 30000);
 });
 
