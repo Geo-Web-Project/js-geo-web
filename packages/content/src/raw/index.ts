@@ -79,9 +79,10 @@ export class API {
    *  - Validates schema + transforms representation -> typed before read
    */
   async get(root: CID, path: string, opts: SchemaOptions): Promise<any> {
-    let result: any;
+    let value: any;
     try {
-      result = await this.#ipfs.dag.get(root, { path, timeout: 2000 });
+      const result = await this.#ipfs.dag.get(root, { path, timeout: 2000 });
+      value = result.value;
     } catch (e) {
       if (this.#ipfsGatewayHost) {
         try {
@@ -89,30 +90,38 @@ export class API {
           console.debug(
             `Retrieving raw block from: ${
               this.#ipfsGatewayHost
-            }/ipfs/${root.toString()}`
+            }/ipfs/${root.toString()}/${path}`
           );
           const rawBlock = await axios.get(
-            `${this.#ipfsGatewayHost}/ipfs/${root.toString()}`,
+            `${this.#ipfsGatewayHost}/ipfs/${root.toString()}/${path}`,
             {
               responseType: "arraybuffer",
               headers: { Accept: "application/vnd.ipld.raw" },
             }
           );
           const uintBuffer = new Uint8Array(rawBlock.data);
-          await this.#ipfs.block.put(uintBuffer);
+          const block = await Block.decode({
+            bytes: uintBuffer,
+            codec: dagcbor,
+            hasher,
+          });
+
+          this.#ipfs.block.put(uintBuffer);
+
+          value = block.value;
         } catch (e) {
           console.warn(`Could not retrieve raw block: ` + e);
         }
-
-        result = await this.#ipfs.dag.get(root, { path });
+      } else {
+        console.info(`Skipping gateway lookup. ipfsGatewayHost not found`);
       }
     }
 
     if (opts.schema) {
       const schemaTyped = create(schema, opts.schema);
-      return schemaTyped.toTyped(result.value);
+      return schemaTyped.toTyped(value);
     } else {
-      return result.value;
+      return value;
     }
   }
 

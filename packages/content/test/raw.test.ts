@@ -669,7 +669,6 @@ describe("deletePath", () => {
     });
 
     const { value } = await ipfs.dag.get(result, { path: "/mediaGallery" });
-    console.log(value);
     expect(value.length).toEqual(1);
   }, 30000);
 
