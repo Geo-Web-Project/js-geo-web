@@ -541,17 +541,17 @@ describe("putPath", () => {
     const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
     const result = await gwContent.raw.putPath(
       rootCid,
-      "/basicProfile",
-      {
-        name: "Hello World",
-      },
-      { parentSchema: "ParcelRoot", leafSchema: "BasicProfile" }
+      "/mediaGallery/0",
+      CID.parse("bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u"),
+      { pin: true }
     );
 
-    await gwContent.raw.commit(result, { ownerId, parcelId, pin: true });
-
-    const newRootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
-    expect(newRootCid.toString()).toEqual(result.toString());
+    const { value } = await ipfs.dag.get(result, { path: "/mediaGallery" });
+    expect(value[0].toString()).toEqual(
+      CID.parse(
+        "bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u"
+      ).toString()
+    );
   }, 30000);
 });
 
