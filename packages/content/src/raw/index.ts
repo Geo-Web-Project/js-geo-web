@@ -7,7 +7,7 @@ import { TileDocument } from "@ceramicnetwork/stream-tile";
 import { schema } from "@geo-web/types";
 import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
-import { CarWriter, CarReader } from "@ipld/car";
+import { CarWriter } from "@ipld/car";
 import * as Block from "multiformats/block";
 import { sha256 as hasher } from "multiformats/hashes/sha2";
 import * as dagcbor from "@ipld/dag-cbor";
@@ -140,7 +140,6 @@ export class API {
     data: any,
     opts?: LeafSchemaOptions & PinOptions
   ): Promise<CID> {
-    console.log("Put path: ", root.toString(), path);
     let newData = data;
     if (opts?.leafSchema) {
       const schemaTyped = create(schema, opts.leafSchema);
@@ -217,7 +216,6 @@ export class API {
             hasher,
           });
           innerBlocks.push(block);
-          console.log("newDataLink 1: " + newDataLink.toString());
           newValue = putInnerPath(value, `/${lastPathSegment}`, newDataLink);
           newDataRepresentation = schemaTyped.toRepresentation(newValue);
           if (newDataRepresentation === undefined) {
@@ -271,31 +269,51 @@ export class API {
         throw new Error("Web3Storage not configured");
       }
 
-      console.log("Pin: " + newCid.toString());
-
       // Build CAR
       const block = await Block.encode({
         value: newValue,
         codec: dagcbor,
         hasher,
       });
-      console.log(newValue);
 
       const { writer, out } = CarWriter.create([newCid as any]);
       writer.put({ cid: newCid as any, bytes: block.bytes });
       innerBlocks.forEach((innerBlock) => {
         writer.put({ cid: innerBlock.cid as any, bytes: innerBlock.bytes });
       });
+
+      // Workaround for https://github.com/web3-storage/web3.storage/blob/5f55e32d5e3c2943235157d91ddb5d143e711cf0/packages/api/src/car.js#L468
+      // Add an empty object to CAR if there are links
+      if (innerBlocks.length === 0) {
+        const emptyBlock = await Block.encode({
+          value: {},
+          codec: dagcbor,
+          hasher,
+        });
+        writer.put({ cid: emptyBlock.cid as any, bytes: emptyBlock.bytes });
+      }
+
       writer.close();
 
-      console.log("Getting reader...");
+      let uploadData = new Uint8Array([]);
+      for await (const d of out) {
+        const mergedArray = new Uint8Array(uploadData.length + d.length);
+        mergedArray.set(uploadData);
+        mergedArray.set(d, uploadData.length);
+        uploadData = mergedArray;
+      }
 
-      const reader = await CarReader.fromIterable(out);
-      console.log("Putting car...");
-
-      await this.#web3Storage?.putCar(reader);
-
-      console.log("Put car.");
+      try {
+        await axios.post(`${this.#web3Storage.endpoint}/car`, uploadData, {
+          headers: {
+            ...Web3Storage.headers(this.#web3Storage.token),
+            "Content-Type": "application/vnd.ipld.raw",
+          },
+        });
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
     }
 
     // 2a. Base case, path is root

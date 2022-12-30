@@ -521,7 +521,7 @@ describe("putPath", () => {
     expect(value).toEqual("Hello World");
   }, 30000);
 
-  test.only("should pin", async () => {
+  test.skip("should pin", async () => {
     const parcelId = new AssetId(
       AssetId.parse(
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
@@ -541,22 +541,17 @@ describe("putPath", () => {
     const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
     const result = await gwContent.raw.putPath(
       rootCid,
-      "/basicProfile",
-      {
-        name: "Hello World",
-      },
-      { parentSchema: "ParcelRoot", leafSchema: "BasicProfile", pin: true }
+      "/mediaGallery/0",
+      CID.parse("bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u"),
+      { pin: true }
     );
 
-    console.log("GET: " + result.toString());
-
-    const { value: parentValue } = await ipfs.dag.get(result);
-    expect(CID.asCID(parentValue["basicProfile"])).toBeDefined();
-
-    const { value } = await ipfs.dag.get(result, {
-      path: "/basicProfile/name",
-    });
-    expect(value).toEqual("Hello World");
+    const { value } = await ipfs.dag.get(result, { path: "/mediaGallery" });
+    expect(value[0].toString()).toEqual(
+      CID.parse(
+        "bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u"
+      ).toString()
+    );
   }, 30000);
 });
 
