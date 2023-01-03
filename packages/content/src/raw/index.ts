@@ -1,6 +1,6 @@
 import { Web3Storage } from "web3.storage";
 import type { IPFS } from "ipfs-core-types";
-import { CeramicApi, SyncOptions } from "@ceramicnetwork/common";
+import { CeramicApi } from "@ceramicnetwork/common";
 import { ConfigOptions, ParcelOptions } from "../index";
 import { CID } from "multiformats";
 import { TileDocument } from "@ceramicnetwork/stream-tile";
@@ -60,8 +60,7 @@ export class API {
         controllers: [`did:pkh:${opts.ownerId.toString()}`],
         family: `geo-web-parcel`,
         tags: [opts.parcelId.toString()],
-      },
-      { sync: SyncOptions.SYNC_ALWAYS }
+      }
     );
     if (doc.content["/"]) {
       return CID.parse(doc.content["/"]);
@@ -357,8 +356,7 @@ export class API {
         controllers: [`did:pkh:${opts.ownerId.toString()}`],
         family: `geo-web-parcel`,
         tags: [opts.parcelId.toString()],
-      },
-      { sync: SyncOptions.SYNC_ALWAYS }
+      }
     );
 
     // Commit to TileDocument
