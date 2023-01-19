@@ -342,7 +342,7 @@ export class API {
   async deletePath(
     root: CID,
     path: string,
-    opts?: LeafSchemaOptions
+    opts?: LeafSchemaOptions & PinOptions
   ): Promise<CID> {
     return await this.putPath(root, path, null, opts);
   }
