@@ -1,4 +1,4 @@
-import { AccountId, AssetId } from "caip";
+import { AssetId } from "caip";
 import { Web3Storage } from "web3.storage";
 import type { IPFS } from "ipfs-core-types";
 import { CeramicApi } from "@ceramicnetwork/common";
@@ -7,7 +7,7 @@ import { API as RawAPI } from "./raw/index.js";
 
 export type ParcelOptions = {
   parcelId: AssetId;
-  ownerId: AccountId;
+  ownerDID: string;
 };
 
 export type ConfigOptions = {

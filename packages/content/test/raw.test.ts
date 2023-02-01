@@ -87,9 +87,7 @@ describe("resolveRoot", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(session.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = session.did.parent;
     // Create root
     const cid = CID.parse(
       "bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u"
@@ -104,9 +102,9 @@ describe("resolveRoot", () => {
 
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
-    const result = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const result = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     expect(result).toEqual(cid);
-  });
+  }, 30000);
 
   test("should resolve empty root", async () => {
     const authMethod = await createEthereumAuthMethod();
@@ -120,14 +118,12 @@ describe("resolveRoot", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(session.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = session.did.parent;
 
     const gwContent = new GeoWebContent({ ceramic, ipfs });
     const emptyRoot = await ipfs.dag.put({}, { storeCodec: "dag-cbor" });
 
-    const result = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const result = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     expect(result).toEqual(emptyRoot);
   });
 });
@@ -193,13 +189,12 @@ describe("getPath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
+
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
     const result = await gwContent.raw.getPath("/", {
-      ownerId,
+      ownerDID,
       parcelId,
     });
     expect(result).toBeDefined();
@@ -211,13 +206,12 @@ describe("getPath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
+
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
     const result = await gwContent.raw.getPath("/", {
-      ownerId,
+      ownerDID,
       parcelId,
       schema: "ParcelRoot",
     });
@@ -230,13 +224,11 @@ describe("getPath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
     const result = await gwContent.raw.getPath("/mediaGallery", {
-      ownerId,
+      ownerDID,
       parcelId,
       schema: "MediaGallery",
     });
@@ -249,13 +241,11 @@ describe("getPath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
     const result = await gwContent.raw.getPath("/mediaGallery", {
-      ownerId,
+      ownerDID,
       parcelId,
       schema: "BasicProfile",
     });
@@ -268,9 +258,7 @@ describe("getPath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({
       ceramic,
       ipfs,
@@ -280,10 +268,10 @@ describe("getPath", () => {
     const rootCid = CID.parse(
       "bafyreidpdi3nm377aepkqlagkzzusyq5lj4uyya7phthqwaiiiimognnua"
     );
-    await gwContent.raw.commit(rootCid, { parcelId, ownerId });
+    await gwContent.raw.commit(rootCid, { parcelId, ownerDID });
 
     const result = await gwContent.raw.getPath("/mediaGallery", {
-      ownerId,
+      ownerDID,
       parcelId,
       schema: "MediaGallery",
     });
@@ -355,12 +343,10 @@ describe("putPath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
-    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.putPath(
       rootCid,
       "/mediaGallery/0",
@@ -381,12 +367,10 @@ describe("putPath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
-    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.putPath(
       rootCid,
       "/mediaGallery",
@@ -422,9 +406,7 @@ describe("putPath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
     const basicProfileCid = await ipfs.dag.put(
@@ -436,7 +418,7 @@ describe("putPath", () => {
       }
     );
 
-    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.putPath(
       rootCid,
       "/basicProfile",
@@ -456,12 +438,10 @@ describe("putPath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
-    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.putPath(
       rootCid,
       "/basicProfile",
@@ -492,9 +472,7 @@ describe("putPath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(session.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = session.did.parent;
 
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
@@ -507,7 +485,7 @@ describe("putPath", () => {
       }
     );
 
-    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.putPath(
       rootCid,
       "/basicProfile",
@@ -527,9 +505,7 @@ describe("putPath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({
       ceramic,
       ipfs,
@@ -538,7 +514,7 @@ describe("putPath", () => {
       }),
     });
 
-    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.putPath(
       rootCid,
       "/mediaGallery/0",
@@ -619,12 +595,10 @@ describe("deletePath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
-    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.deletePath(
       rootCid,
       "/basicProfile/name"
@@ -640,12 +614,10 @@ describe("deletePath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
-    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.deletePath(rootCid, "/mediaGallery/0");
 
     const { value } = await ipfs.dag.get(result, { path: "/mediaGallery" });
@@ -658,12 +630,10 @@ describe("deletePath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
-    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.deletePath(rootCid, "/mediaGallery/0", {
       parentSchema: "MediaGallery",
     });
@@ -678,12 +648,10 @@ describe("deletePath", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
-    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.deletePath(rootCid, "/basicProfile", {
       parentSchema: "ParcelRoot",
     });
@@ -757,12 +725,10 @@ describe("commit", () => {
         "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
       )
     );
-    const ownerId = new AccountId(
-      AccountId.parse(ceramic.did.parent.split("did:pkh:")[1])
-    );
+    const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({ ceramic, ipfs });
 
-    const rootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.putPath(
       rootCid,
       "/basicProfile",
@@ -772,9 +738,9 @@ describe("commit", () => {
       { parentSchema: "ParcelRoot", leafSchema: "BasicProfile" }
     );
 
-    await gwContent.raw.commit(result, { ownerId, parcelId });
+    await gwContent.raw.commit(result, { ownerDID, parcelId });
 
-    const newRootCid = await gwContent.raw.resolveRoot({ ownerId, parcelId });
+    const newRootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     expect(newRootCid.toString()).toEqual(result.toString());
   }, 30000);
 });

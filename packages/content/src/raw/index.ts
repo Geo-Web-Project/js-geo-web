@@ -57,7 +57,7 @@ export class API {
     const doc = await TileDocument.deterministic<Record<string, any>>(
       this.#ceramic,
       {
-        controllers: [`did:pkh:${opts.ownerId.toString()}`],
+        controllers: [opts.ownerDID],
         family: `geo-web-parcel`,
         tags: [opts.parcelId.toString()],
       },
@@ -354,7 +354,7 @@ export class API {
     const doc = await TileDocument.deterministic<Record<string, any>>(
       this.#ceramic,
       {
-        controllers: [`did:pkh:${opts.ownerId.toString()}`],
+        controllers: [opts.ownerDID],
         family: `geo-web-parcel`,
         tags: [opts.parcelId.toString()],
       },
