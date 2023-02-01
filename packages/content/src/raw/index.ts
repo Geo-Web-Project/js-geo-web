@@ -52,9 +52,15 @@ export class API {
 
   /*
    * Resolve content root
+   *
+   * Fallbacks:
+   * 1. Check TileDocument with EIP-55 checksum address
+   * 2. Check TileDocument with lowercase address
+   * 3. Empty root
    */
   async resolveRoot(opts: ParcelOptions): Promise<CID> {
-    const doc = await TileDocument.deterministic<Record<string, any>>(
+    // 1. EIP-55 checksum address
+    let doc = await TileDocument.deterministic<Record<string, any>>(
       this.#ceramic,
       {
         controllers: [opts.ownerDID],
@@ -63,6 +69,20 @@ export class API {
       },
       { sync: SyncOptions.SYNC_ALWAYS }
     );
+
+    if (!doc.content["/"]) {
+      // 2. Lowercase address
+      doc = await TileDocument.deterministic<Record<string, any>>(
+        this.#ceramic,
+        {
+          controllers: [opts.ownerDID.toLowerCase()],
+          family: `geo-web-parcel`,
+          tags: [opts.parcelId.toString()],
+        },
+        { sync: SyncOptions.SYNC_ALWAYS }
+      );
+    }
+
     if (doc.content["/"]) {
       return CID.parse(doc.content["/"]);
     } else {

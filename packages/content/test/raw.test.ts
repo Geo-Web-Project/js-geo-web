@@ -75,7 +75,7 @@ describe("resolveRoot", () => {
     ceramic.did = did;
   });
 
-  test("should resolve root", async () => {
+  test("should resolve root #1: EIP-55 address", async () => {
     const authMethod = await createEthereumAuthMethod();
     const session = await DIDSession.authorize(authMethod, {
       resources: [`ceramic://*`],
@@ -106,6 +106,37 @@ describe("resolveRoot", () => {
     expect(result).toEqual(cid);
   }, 30000);
 
+  test("should resolve root #2: Lowercase address", async () => {
+    const authMethod = await createEthereumAuthMethod();
+    const session = await DIDSession.authorize(authMethod, {
+      resources: [`ceramic://*`],
+    });
+    ceramic.did = session.did;
+
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+      )
+    );
+    const ownerDID = session.did.parent;
+    // Create root
+    const cid = CID.parse(
+      "bafybeidskjjd4zmr7oh6ku6wp72vvbxyibcli2r6if3ocdcy7jjjusvl2u"
+    );
+    const bytes = dagjson.encode(cid);
+    const doc = await TileDocument.deterministic<Record<string, any>>(ceramic, {
+      controllers: [session.did.parent.toLowerCase()],
+      family: `geo-web-parcel`,
+      tags: [parcelId.toString()],
+    });
+    await doc.update(json.decode(bytes));
+
+    const gwContent = new GeoWebContent({ ceramic, ipfs });
+
+    const result = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
+    expect(result).toEqual(cid);
+  }, 30000);
+
   test("should resolve empty root", async () => {
     const authMethod = await createEthereumAuthMethod();
     const session = await DIDSession.authorize(authMethod, {
@@ -125,7 +156,7 @@ describe("resolveRoot", () => {
 
     const result = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     expect(result).toEqual(emptyRoot);
-  });
+  }, 30000);
 });
 
 describe("getPath", () => {
