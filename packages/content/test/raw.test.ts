@@ -18,7 +18,8 @@ import { AuthMethod } from "@didtools/cacao";
 import { CID } from "multiformats";
 import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
-import { Web3Storage } from "web3.storage";
+import { create } from "@web3-storage/w3up-client";
+import { StoreConf } from "@web3-storage/access";
 
 declare global {
   const ceramic: CeramicApi;
@@ -537,12 +538,20 @@ describe("putPath", () => {
       )
     );
     const ownerDID = ceramic.did!.parent;
+
+    const store = new StoreConf({
+      profile: process.env.W3_STORE_NAME ?? "w3cli",
+    });
+    const w3Client = await create({ store });
+    console.log(w3Client.proofs().map((v) => v.capabilities));
     const gwContent = new GeoWebContent({
       ceramic,
       ipfs,
-      web3Storage: new Web3Storage({
-        token: "",
-      }),
+      w3InvocationConfig: {
+        issuer: w3Client.agent(),
+        with: w3Client.currentSpace()?.did(),
+        proofs: w3Client.proofs(),
+      },
     });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });

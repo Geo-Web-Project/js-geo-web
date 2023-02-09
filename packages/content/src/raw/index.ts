@@ -1,4 +1,3 @@
-import { Web3Storage } from "web3.storage";
 import type { IPFS } from "ipfs-core-types";
 import { CeramicApi, SyncOptions } from "@ceramicnetwork/common";
 import { ConfigOptions, ParcelOptions } from "../index";
@@ -7,11 +6,16 @@ import { TileDocument } from "@ceramicnetwork/stream-tile";
 import { schema } from "@geo-web/types";
 import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
-import { CarWriter } from "@ipld/car";
 import * as Block from "multiformats/block";
 import { sha256 as hasher } from "multiformats/hashes/sha2";
 import * as dagcbor from "@ipld/dag-cbor";
 import { default as axios } from "axios";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import type { InvocationConfig } from "@web3-storage/upload-client";
+import { CAR, uploadCAR } from "@web3-storage/upload-client";
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { create } from "@ipld/schema/typed.js";
@@ -33,13 +37,13 @@ export class API {
   #ipfs: IPFS;
   #ipfsGatewayHost?: string;
   #ceramic: CeramicApi;
-  #web3Storage?: Web3Storage;
+  #w3InvocationConfig?: InvocationConfig;
 
   constructor(opts: ConfigOptions) {
     this.#ipfs = opts.ipfs;
     this.#ipfsGatewayHost = opts.ipfsGatewayHost;
     this.#ceramic = opts.ceramic;
-    this.#web3Storage = opts.web3Storage;
+    this.#w3InvocationConfig = opts.w3InvocationConfig;
   }
 
   /*
@@ -295,7 +299,7 @@ export class API {
     });
 
     if (opts?.pin) {
-      if (!this.#web3Storage) {
+      if (!this.#w3InvocationConfig) {
         throw new Error("Web3Storage not configured");
       }
 
@@ -306,40 +310,9 @@ export class API {
         hasher,
       });
 
-      const { writer, out } = CarWriter.create([newCid as any]);
-      writer.put({ cid: newCid as any, bytes: block.bytes });
-      innerBlocks.forEach((innerBlock) => {
-        writer.put({ cid: innerBlock.cid as any, bytes: innerBlock.bytes });
-      });
-
-      // Workaround for https://github.com/web3-storage/web3.storage/blob/5f55e32d5e3c2943235157d91ddb5d143e711cf0/packages/api/src/car.js#L468
-      // Add an empty object to CAR if there are links
-      if (innerBlocks.length === 0) {
-        const emptyBlock = await Block.encode({
-          value: {},
-          codec: dagcbor,
-          hasher,
-        });
-        writer.put({ cid: emptyBlock.cid as any, bytes: emptyBlock.bytes });
-      }
-
-      writer.close();
-
-      let uploadData = new Uint8Array([]);
-      for await (const d of out) {
-        const mergedArray = new Uint8Array(uploadData.length + d.length);
-        mergedArray.set(uploadData);
-        mergedArray.set(d, uploadData.length);
-        uploadData = mergedArray;
-      }
-
       try {
-        await axios.post(`${this.#web3Storage.endpoint}/car`, uploadData, {
-          headers: {
-            ...Web3Storage.headers(this.#web3Storage.token),
-            "Content-Type": "application/vnd.ipld.raw",
-          },
-        });
+        const car = await CAR.encode([block, ...innerBlocks]);
+        await uploadCAR(this.#w3InvocationConfig, car);
       } catch (e) {
         console.error(e);
         throw e;

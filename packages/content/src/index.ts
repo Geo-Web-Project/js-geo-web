@@ -1,7 +1,10 @@
 import { AssetId } from "caip";
-import { Web3Storage } from "web3.storage";
 import type { IPFS } from "ipfs-core-types";
 import { CeramicApi } from "@ceramicnetwork/common";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import type { InvocationConfig } from "@web3-storage/upload-client";
 
 import { API as RawAPI } from "./raw/index.js";
 
@@ -14,7 +17,7 @@ export type ConfigOptions = {
   ipfs: IPFS;
   ipfsGatewayHost?: string;
   ceramic: CeramicApi;
-  web3Storage?: Web3Storage;
+  w3InvocationConfig?: InvocationConfig;
 };
 
 export class GeoWebContent {
