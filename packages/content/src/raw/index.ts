@@ -36,8 +36,8 @@ type PinOptions = {
 export class API {
   #ipfs: IPFS;
   #ipfsGatewayHost?: string;
-  #tileLoader: TileLoader;
   #w3InvocationConfig?: InvocationConfig;
+  #tileLoader: TileLoader;
 
   constructor(opts: ConfigOptions) {
     this.#ipfs = opts.ipfs;
@@ -102,11 +102,16 @@ export class API {
    *  - Validates schema + transforms representation -> typed before read
    */
   async get(root: CID, path: string, opts: SchemaOptions): Promise<any> {
-    let value: any;
-    try {
-      const result = await this.#ipfs.dag.get(root, { path, timeout: 2000 });
-      value = result.value;
-    } catch (e) {
+    const jsIpfsRequest = new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.#ipfs.dag.get(root, { path });
+        resolve(result.value);
+      } catch (err) {
+        console.warn(err);
+        reject();
+      }
+    });
+    const gatewayRequest = new Promise(async (resolve, reject) => {
       if (this.#ipfsGatewayHost) {
         try {
           // Download raw block
@@ -131,13 +136,23 @@ export class API {
 
           this.#ipfs.block.put(uintBuffer);
 
-          value = block.value;
+          resolve(block.value);
         } catch (e) {
           console.warn(`Could not retrieve raw block: ` + e);
+          reject();
         }
       } else {
         console.info(`Skipping gateway lookup. ipfsGatewayHost not found`);
+        reject();
       }
+    });
+
+    let value;
+
+    try {
+      value = await Promise.any([jsIpfsRequest, gatewayRequest]);
+    } catch (err) {
+      console.warn(err);
     }
 
     if (opts.schema) {
