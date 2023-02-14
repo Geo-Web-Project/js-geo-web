@@ -1,6 +1,7 @@
 import { BasicProfile } from "../src";
 import { schema } from "../src";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { create } from "@ipld/schema/typed.js";
 

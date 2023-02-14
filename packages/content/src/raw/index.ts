@@ -1,8 +1,8 @@
 import type { IPFS } from "ipfs-core-types";
-import { CeramicApi, SyncOptions } from "@ceramicnetwork/common";
+import { SyncOptions } from "@ceramicnetwork/common";
 import { ConfigOptions, ParcelOptions } from "../index";
 import { CID } from "multiformats";
-import { TileDocument } from "@ceramicnetwork/stream-tile";
+import { TileLoader } from "@glazed/tile-loader"
 import { schema } from "@geo-web/types";
 import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
@@ -36,14 +36,14 @@ type PinOptions = {
 export class API {
   #ipfs: IPFS;
   #ipfsGatewayHost?: string;
-  #ceramic: CeramicApi;
+  #tileLoader: TileLoader;
   #w3InvocationConfig?: InvocationConfig;
 
   constructor(opts: ConfigOptions) {
     this.#ipfs = opts.ipfs;
     this.#ipfsGatewayHost = opts.ipfsGatewayHost;
-    this.#ceramic = opts.ceramic;
     this.#w3InvocationConfig = opts.w3InvocationConfig;
+    this.#tileLoader = new TileLoader({ ceramic: opts.ceramic, cache: true });
   }
 
   /*
@@ -64,30 +64,28 @@ export class API {
    */
   async resolveRoot(opts: ParcelOptions): Promise<CID> {
     // 1. EIP-55 checksum address
-    let doc = await TileDocument.deterministic<Record<string, any>>(
-      this.#ceramic,
+    let doc = await this.#tileLoader.deterministic<Record<string, any>>(
       {
         controllers: [opts.ownerDID],
         family: `geo-web-parcel`,
         tags: [opts.parcelId.toString()],
       },
-      { sync: SyncOptions.SYNC_ALWAYS }
+      { sync: SyncOptions.SYNC_ON_ERROR }
     );
 
-    if (!doc.content["/"]) {
+    if (!doc.content || !doc.content["/"]) {
       // 2. Lowercase address
-      doc = await TileDocument.deterministic<Record<string, any>>(
-        this.#ceramic,
+      doc = await this.#tileLoader.deterministic<Record<string, any>>(
         {
           controllers: [opts.ownerDID.toLowerCase()],
           family: `geo-web-parcel`,
           tags: [opts.parcelId.toString()],
         },
-        { sync: SyncOptions.SYNC_ALWAYS }
+        { sync: SyncOptions.SYNC_ON_ERROR }
       );
     }
 
-    if (doc.content["/"]) {
+    if (doc.content && doc.content["/"]) {
       return CID.parse(doc.content["/"]);
     } else {
       // Empty root
@@ -344,14 +342,13 @@ export class API {
    * Commit new root to Ceramic
    */
   async commit(root: CID, opts: ParcelOptions): Promise<void> {
-    const doc = await TileDocument.deterministic<Record<string, any>>(
-      this.#ceramic,
+    const doc = await this.#tileLoader.deterministic<Record<string, any>>(
       {
         controllers: [opts.ownerDID],
         family: `geo-web-parcel`,
         tags: [opts.parcelId.toString()],
       },
-      { sync: SyncOptions.SYNC_ALWAYS }
+      { sync: SyncOptions.SYNC_ON_ERROR }
     );
 
     // Commit to TileDocument
