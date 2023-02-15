@@ -2,7 +2,7 @@ import type { IPFS } from "ipfs-core-types";
 import { SyncOptions } from "@ceramicnetwork/common";
 import { ConfigOptions, ParcelOptions } from "../index";
 import { CID } from "multiformats";
-import { TileLoader } from "@glazed/tile-loader"
+import { TileLoader } from "@glazed/tile-loader";
 import { schema } from "@geo-web/types";
 import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
@@ -102,49 +102,58 @@ export class API {
    *  - Validates schema + transforms representation -> typed before read
    */
   async get(root: CID, path: string, opts: SchemaOptions): Promise<any> {
+    let timerId: ReturnType<typeof setTimeout>;
+
     const jsIpfsRequest = new Promise(async (resolve, reject) => {
       try {
         const result = await this.#ipfs.dag.get(root, { path });
+
+        if (timerId) {
+          clearTimeout(timerId);
+        }
+
         resolve(result.value);
       } catch (err) {
         console.warn(err);
         reject();
       }
     });
-    const gatewayRequest = new Promise(async (resolve, reject) => {
-      if (this.#ipfsGatewayHost) {
-        try {
-          // Download raw block
-          console.debug(
-            `Retrieving raw block from: ${
-              this.#ipfsGatewayHost
-            }/ipfs/${root.toString()}/${path}`
-          );
-          const rawBlock = await axios.get(
-            `${this.#ipfsGatewayHost}/ipfs/${root.toString()}/${path}`,
-            {
-              responseType: "arraybuffer",
-              headers: { Accept: "application/vnd.ipld.raw" },
-            }
-          );
-          const uintBuffer = new Uint8Array(rawBlock.data);
-          const block = await Block.decode({
-            bytes: uintBuffer,
-            codec: dagcbor,
-            hasher,
-          });
+    const gatewayRequest = new Promise((resolve, reject) => {
+      timerId = setTimeout(async () => {
+        if (this.#ipfsGatewayHost) {
+          try {
+            // Download raw block
+            console.debug(
+              `Retrieving raw block from: ${
+                this.#ipfsGatewayHost
+              }/ipfs/${root.toString()}/${path}`
+            );
+            const rawBlock = await axios.get(
+              `${this.#ipfsGatewayHost}/ipfs/${root.toString()}/${path}`,
+              {
+                responseType: "arraybuffer",
+                headers: { Accept: "application/vnd.ipld.raw" },
+              }
+            );
+            const uintBuffer = new Uint8Array(rawBlock.data);
+            const block = await Block.decode({
+              bytes: uintBuffer,
+              codec: dagcbor,
+              hasher,
+            });
 
-          this.#ipfs.block.put(uintBuffer);
+            this.#ipfs.block.put(uintBuffer);
 
-          resolve(block.value);
-        } catch (e) {
-          console.warn(`Could not retrieve raw block: ` + e);
+            resolve(block.value);
+          } catch (e) {
+            console.warn(`Could not retrieve raw block: ` + e);
+            reject();
+          }
+        } else {
+          console.info(`Skipping gateway lookup. ipfsGatewayHost not found`);
           reject();
         }
-      } else {
-        console.info(`Skipping gateway lookup. ipfsGatewayHost not found`);
-        reject();
-      }
+      }, 2000);
     });
 
     let value;
