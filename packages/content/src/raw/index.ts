@@ -101,7 +101,7 @@ export class API {
    *  - Validates schema + transforms representation -> typed before read
    */
   async get(root: CID, path: string, opts: SchemaOptions): Promise<any> {
-    let value: any = {};
+    let value: any;
     let cid: CID;
     let timerId: ReturnType<typeof setTimeout>;
 
