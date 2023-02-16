@@ -153,7 +153,9 @@ describe("resolveRoot", () => {
     const ownerDID = session.did.parent;
 
     const gwContent = new GeoWebContent({ ceramic, ipfs });
-    const emptyRoot = await ipfs.dag.put({}, { storeCodec: "dag-cbor" });
+    const emptyRoot = CID.parse(
+      "bafyreigbtj4x7ip5legnfznufuopl4sg4knzc2cof6duas4b3q2fy6swua"
+    );
 
     const result = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     expect(result).toEqual(emptyRoot);

@@ -38,20 +38,23 @@ export class API {
   #ipfsGatewayHost?: string;
   #w3InvocationConfig?: InvocationConfig;
   #tileLoader: TileLoader;
+  #emptyRoot: CID;
 
   constructor(opts: ConfigOptions) {
     this.#ipfs = opts.ipfs;
     this.#ipfsGatewayHost = opts.ipfsGatewayHost;
     this.#w3InvocationConfig = opts.w3InvocationConfig;
     this.#tileLoader = new TileLoader({ ceramic: opts.ceramic, cache: true });
+    this.#emptyRoot = CID.parse(
+      "bafyreigbtj4x7ip5legnfznufuopl4sg4knzc2cof6duas4b3q2fy6swua"
+    );
   }
 
   /*
    * Initialize empty content root
    */
   async initRoot(opts: ParcelOptions): Promise<void> {
-    const emptyRoot = await this.#ipfs.dag.put({}, { storeCodec: "dag-cbor" });
-    return await this.commit(emptyRoot, opts);
+    return await this.commit(this.#emptyRoot, opts);
   }
 
   /*
@@ -89,11 +92,7 @@ export class API {
       return CID.parse(doc.content["/"]);
     } else {
       // Empty root
-      const emptyRoot = await this.#ipfs.dag.put(
-        {},
-        { storeCodec: "dag-cbor" }
-      );
-      return emptyRoot;
+      return this.#emptyRoot;
     }
   }
 
@@ -102,11 +101,24 @@ export class API {
    *  - Validates schema + transforms representation -> typed before read
    */
   async get(root: CID, path: string, opts: SchemaOptions): Promise<any> {
+    let value: any = {};
+    let cid: CID;
     let timerId: ReturnType<typeof setTimeout>;
+
+    if (root.toString() === this.#emptyRoot.toString()) {
+      return value;
+    }
+
+    try {
+      cid = (await this.#ipfs.dag.resolve(root, { path })).cid;
+    } catch (err) {
+      console.warn(err);
+      return value;
+    }
 
     const jsIpfsRequest = new Promise(async (resolve, reject) => {
       try {
-        const result = await this.#ipfs.dag.get(root, { path });
+        const result = await this.#ipfs.dag.get(cid);
 
         if (timerId) {
           clearTimeout(timerId);
@@ -126,10 +138,10 @@ export class API {
             console.debug(
               `Retrieving raw block from: ${
                 this.#ipfsGatewayHost
-              }/ipfs/${root.toString()}/${path}`
+              }/ipfs/${cid.toString()}`
             );
             const rawBlock = await axios.get(
-              `${this.#ipfsGatewayHost}/ipfs/${root.toString()}/${path}`,
+              `${this.#ipfsGatewayHost}/ipfs/${cid.toString()}`,
               {
                 responseType: "arraybuffer",
                 headers: { Accept: "application/vnd.ipld.raw" },
@@ -155,8 +167,6 @@ export class API {
         }
       }, 2000);
     });
-
-    let value;
 
     try {
       value = await Promise.any([jsIpfsRequest, gatewayRequest]);
