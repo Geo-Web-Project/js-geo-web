@@ -38,23 +38,20 @@ export class API {
   #ipfsGatewayHost?: string;
   #w3InvocationConfig?: InvocationConfig;
   #tileLoader: TileLoader;
-  #emptyRoot: CID;
 
   constructor(opts: ConfigOptions) {
     this.#ipfs = opts.ipfs;
     this.#ipfsGatewayHost = opts.ipfsGatewayHost;
     this.#w3InvocationConfig = opts.w3InvocationConfig;
     this.#tileLoader = new TileLoader({ ceramic: opts.ceramic, cache: true });
-    this.#emptyRoot = CID.parse(
-      "bafyreigbtj4x7ip5legnfznufuopl4sg4knzc2cof6duas4b3q2fy6swua"
-    );
   }
 
   /*
    * Initialize empty content root
    */
   async initRoot(opts: ParcelOptions): Promise<void> {
-    return await this.commit(this.#emptyRoot, opts);
+    const emptyRoot = await this.#ipfs.dag.put({}, { storeCodec: "dag-cbor" });
+    return await this.commit(emptyRoot, opts);
   }
 
   /*
@@ -92,7 +89,11 @@ export class API {
       return CID.parse(doc.content["/"]);
     } else {
       // Empty root
-      return this.#emptyRoot;
+      const emptyRoot = await this.#ipfs.dag.put(
+        {},
+        { storeCodec: "dag-cbor" }
+      );
+      return emptyRoot;
     }
   }
 
@@ -104,10 +105,6 @@ export class API {
     let value: any;
     let cid: CID;
     let timerId: ReturnType<typeof setTimeout>;
-
-    if (root.toString() === this.#emptyRoot.toString()) {
-      return value;
-    }
 
     try {
       cid = (await this.#ipfs.dag.resolve(root, { path })).cid;
