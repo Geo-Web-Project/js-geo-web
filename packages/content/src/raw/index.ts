@@ -102,11 +102,20 @@ export class API {
    *  - Validates schema + transforms representation -> typed before read
    */
   async get(root: CID, path: string, opts: SchemaOptions): Promise<any> {
+    let value: any;
+    let cid: CID;
     let timerId: ReturnType<typeof setTimeout>;
+
+    try {
+      cid = (await this.#ipfs.dag.resolve(root, { path })).cid;
+    } catch (err) {
+      console.warn(err);
+      return value;
+    }
 
     const jsIpfsRequest = new Promise(async (resolve, reject) => {
       try {
-        const result = await this.#ipfs.dag.get(root, { path });
+        const result = await this.#ipfs.dag.get(cid);
 
         if (timerId) {
           clearTimeout(timerId);
@@ -126,10 +135,10 @@ export class API {
             console.debug(
               `Retrieving raw block from: ${
                 this.#ipfsGatewayHost
-              }/ipfs/${root.toString()}/${path}`
+              }/ipfs/${cid.toString()}`
             );
             const rawBlock = await axios.get(
-              `${this.#ipfsGatewayHost}/ipfs/${root.toString()}/${path}`,
+              `${this.#ipfsGatewayHost}/ipfs/${cid.toString()}`,
               {
                 responseType: "arraybuffer",
                 headers: { Accept: "application/vnd.ipld.raw" },
@@ -155,8 +164,6 @@ export class API {
         }
       }, 2000);
     });
-
-    let value;
 
     try {
       value = await Promise.any([jsIpfsRequest, gatewayRequest]);
