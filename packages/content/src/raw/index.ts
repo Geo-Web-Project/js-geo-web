@@ -117,8 +117,12 @@ export class API {
           resolve(result.value);
         })
         .catch((err) => {
-          console.warn(err);
-          reject(err);
+          console.warn(`IPFS get Error: `, err);
+          if ((err as Error).message.includes("no link named")) {
+            resolve(value);
+          } else {
+            reject(err);
+          }
         });
     });
     const gatewayRequest = new Promise((resolve, reject) => {
@@ -130,7 +134,7 @@ export class API {
               .cid;
             console.debug(`Found ${root.toString()}/${path} from IPFS resolve`);
           } catch (err) {
-            console.warn(err);
+            console.warn(`IPFS resolve Error: `, err);
             if ((err as Error).message.includes("no link named")) {
               return value;
             }
