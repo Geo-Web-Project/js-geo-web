@@ -1,6 +1,6 @@
 {
   "name": "@geo-web/content",
-  "version": "0.5.3-rc4",
+  "version": "0.5.3-rc5",
   "description": "",
   "type": "module",
   "main": "dist/index.js",
