@@ -103,33 +103,35 @@ export class API {
    */
   async get(root: CID, path: string, opts: SchemaOptions): Promise<any> {
     let value: any;
-    let cid: CID;
     let timerId: ReturnType<typeof setTimeout>;
 
-    try {
-      cid = (await this.#ipfs.dag.resolve(root, { path })).cid;
-    } catch (err) {
-      console.warn(err);
-      return value;
-    }
+    const jsIpfsRequest = new Promise((resolve, reject) => {
+      this.#ipfs.dag
+        .get(root, { path })
+        .then((result) => {
+          if (timerId) {
+            clearTimeout(timerId);
+          }
 
-    const jsIpfsRequest = new Promise(async (resolve, reject) => {
-      try {
-        const result = await this.#ipfs.dag.get(cid);
-
-        if (timerId) {
-          clearTimeout(timerId);
-        }
-
-        resolve(result.value);
-      } catch (err) {
-        console.warn(err);
-        reject();
-      }
+          resolve(result.value);
+        })
+        .catch((err) => {
+          console.warn(err);
+          reject(err);
+        });
     });
     const gatewayRequest = new Promise((resolve, reject) => {
       timerId = setTimeout(async () => {
         if (this.#ipfsGatewayHost) {
+          let cid: CID;
+          try {
+            cid = (await this.#ipfs.dag.resolve(root, { path, timeout: 500 }))
+              .cid;
+          } catch (err) {
+            console.warn(err);
+            return value;
+          }
+
           try {
             // Download raw block
             console.debug(
