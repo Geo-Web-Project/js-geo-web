@@ -113,7 +113,7 @@ export class API {
             clearTimeout(timerId);
           }
 
-          console.log(`Found ${root.toString()}/${path} from IPFS get`);
+          console.debug(`Found ${root.toString()}/${path} from IPFS get`);
           resolve(result.value);
         })
         .catch((err) => {
@@ -128,7 +128,7 @@ export class API {
           try {
             cid = (await this.#ipfs.dag.resolve(root, { path, timeout: 500 }))
               .cid;
-            console.log(`Found ${root.toString()}/${path} from IPFS resolve`);
+            console.debug(`Found ${root.toString()}/${path} from IPFS resolve`);
           } catch (err) {
             console.warn(err);
             if ((err as Error).message.includes("no link named")) {
@@ -137,7 +137,7 @@ export class API {
           }
 
           try {
-            const cidStr = cid ? cid.toString() : `${root.toString}/${path}`;
+            const cidStr = cid ? cid.toString() : `${root.toString()}/${path}`;
             // Download raw block
             console.debug(
               `Retrieving raw block from: ${
