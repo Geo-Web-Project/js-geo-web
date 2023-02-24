@@ -124,25 +124,28 @@ export class API {
     const gatewayRequest = new Promise((resolve, reject) => {
       timerId = setTimeout(async () => {
         if (this.#ipfsGatewayHost) {
-          let cid: CID;
+          let cid: CID | null = null;
           try {
             cid = (await this.#ipfs.dag.resolve(root, { path, timeout: 500 }))
               .cid;
             console.log(`Found ${root.toString()}/${path} from IPFS resolve`);
           } catch (err) {
             console.warn(err);
-            return value;
+            if ((err as Error).message.includes("no link named")) {
+              return value;
+            }
           }
 
           try {
+            const cidStr = cid ? cid.toString() : `${root.toString}/${path}`;
             // Download raw block
             console.debug(
               `Retrieving raw block from: ${
                 this.#ipfsGatewayHost
-              }/ipfs/${cid.toString()}`
+              }/ipfs/${cidStr}`
             );
             const rawBlock = await axios.get(
-              `${this.#ipfsGatewayHost}/ipfs/${cid.toString()}`,
+              `${this.#ipfsGatewayHost}/ipfs/${cidStr}`,
               {
                 responseType: "arraybuffer",
                 headers: { Accept: "application/vnd.ipld.raw" },
