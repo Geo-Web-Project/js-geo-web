@@ -113,6 +113,7 @@ export class API {
             clearTimeout(timerId);
           }
 
+          console.log(`Found ${root.toString()}/${path} from IPFS get`);
           resolve(result.value);
         })
         .catch((err) => {
@@ -127,6 +128,7 @@ export class API {
           try {
             cid = (await this.#ipfs.dag.resolve(root, { path, timeout: 500 }))
               .cid;
+            console.log(`Found ${root.toString()}/${path} from IPFS resolve`);
           } catch (err) {
             console.warn(err);
             return value;
