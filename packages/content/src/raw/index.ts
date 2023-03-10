@@ -162,9 +162,7 @@ export class API {
               hasher,
             });
 
-            // this.#ipfs.block.put(uintBuffer).catch(() => {
-            //   return;
-            // });
+            this.#ipfs.block.put(uintBuffer, { preload: false });
 
             resolve(block.value);
           } catch (e) {
