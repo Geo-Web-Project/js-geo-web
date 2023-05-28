@@ -233,6 +233,10 @@
               }
             },
             "optional": true
+          },
+          "augmentedWorld": {
+            "type": "Link",
+            "optional": true
           }
         },
         "representation": {

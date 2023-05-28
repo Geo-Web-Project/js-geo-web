@@ -8,12 +8,14 @@ The root IPLD object attached to a parcel.
 type ParcelRoot struct {
 	basicProfile optional &BasicProfile
 	mediaGallery optional &MediaGallery
+	augmentedWorld optional Link
 }
 ```
 
 ## Browser Support
 
-| Property       | [Geo Web Cadastre](https://github.com/Geo-Web-Project/cadastre) | [GeoWeb.app](https://geoweb.app) |
-| -------------- | --------------------------------------------------------------- | -------------------------------- |
-| `basicProfile` | ✅                                                              | ✅                               |
-| `mediaGallery` | ✅                                                              | ✅                               |
+| Property         | [Geo Web Cadastre](https://github.com/Geo-Web-Project/cadastre) | [GeoWeb.app](https://geoweb.app) |
+| ---------------- | --------------------------------------------------------------- | -------------------------------- |
+| `basicProfile`   | ✅                                                              | ✅                               |
+| `mediaGallery`   | ✅                                                              | ✅                               |
+| `augmentedWorld` | 🚧                                                              | 🚧                               |
