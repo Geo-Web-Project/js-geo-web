@@ -1,7 +1,7 @@
 import type { IPFS } from "ipfs-core-types";
 import { SyncOptions } from "@ceramicnetwork/common";
 import { ConfigOptions, ParcelOptions } from "../index";
-import { CID } from "multiformats";
+import { CID, varint } from "multiformats";
 import { TileLoader } from "@glazed/tile-loader";
 import { schema } from "@geo-web/types";
 import * as json from "multiformats/codecs/json";
@@ -10,6 +10,8 @@ import * as Block from "multiformats/block";
 import { sha256 as hasher } from "multiformats/hashes/sha2";
 import * as dagcbor from "@ipld/dag-cbor";
 import { default as axios } from "axios";
+import { ApolloClient, NormalizedCacheObject, gql } from "@apollo/client/core";
+import { base16 } from "multiformats/bases/base16";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -33,17 +35,37 @@ type PinOptions = {
   pin?: boolean;
 };
 
+const parcelQuery = gql`
+  query GeoWebParcel($id: String) {
+    geoWebParcel(id: $id) {
+      contentHash
+    }
+  }
+`;
+
+export interface GeoWebParcel {
+  contentHash?: string;
+}
+
+export interface ParcelQuery {
+  geoWebParcel?: GeoWebParcel;
+}
+
+const IPFS_CODE = 0xe3;
+
 export class API {
   #ipfs: IPFS;
   #ipfsGatewayHost?: string;
   #w3InvocationConfig?: InvocationConfig;
   #tileLoader: TileLoader;
+  #apolloClient: ApolloClient<NormalizedCacheObject>;
 
   constructor(opts: ConfigOptions) {
     this.#ipfs = opts.ipfs;
     this.#ipfsGatewayHost = opts.ipfsGatewayHost;
     this.#w3InvocationConfig = opts.w3InvocationConfig;
     this.#tileLoader = new TileLoader({ ceramic: opts.ceramic, cache: true });
+    this.#apolloClient = opts.apolloClient;
   }
 
   /*
@@ -58,12 +80,44 @@ export class API {
    * Resolve content root
    *
    * Fallbacks:
-   * 1. Check TileDocument with EIP-55 checksum address
-   * 2. Check TileDocument with lowercase address
-   * 3. Empty root
+   * 1. Check for IPFS cid in subgraph
+   * 2. Check TileDocument with EIP-55 checksum address
+   * 3. Check TileDocument with lowercase address
+   * 4. Empty root
    */
   async resolveRoot(opts: ParcelOptions): Promise<CID> {
-    // 1. EIP-55 checksum address
+    // 1. Subgraph
+    const queryResult = await this.#apolloClient.query<ParcelQuery>({
+      query: parcelQuery,
+      variables: {
+        id: Number(opts.parcelId.tokenId).toString(16),
+      },
+    });
+
+    if (queryResult.data.geoWebParcel?.contentHash) {
+      try {
+        const rawCid = base16.decode(
+          `f${queryResult.data.geoWebParcel?.contentHash?.split("0x")[1]}`
+        );
+        console.log(rawCid);
+        const [code] = varint.decode(rawCid);
+        console.log(code);
+        if (code !== IPFS_CODE) {
+          console.debug("Content hash is not IPFS CID");
+        } else {
+          console.log(rawCid);
+          console.log(rawCid.subarray(2));
+          console.log(CID.decodeFirst(rawCid.subarray(2)));
+          return CID.decode(rawCid.subarray(2));
+        }
+      } catch (e) {
+        console.debug("Failed to find CID. Falling back to Ceramic: ", e);
+      }
+    } else {
+      console.debug("CID does not exist on subgraph. Falling back to Ceramic.");
+    }
+
+    // 2. EIP-55 checksum address
     let doc = await this.#tileLoader.deterministic<Record<string, any>>(
       {
         controllers: [opts.ownerDID],
@@ -74,7 +128,7 @@ export class API {
     );
 
     if (!doc.content || !doc.content["/"]) {
-      // 2. Lowercase address
+      // 3. Lowercase address
       doc = await this.#tileLoader.deterministic<Record<string, any>>(
         {
           controllers: [opts.ownerDID.toLowerCase()],
@@ -88,7 +142,7 @@ export class API {
     if (doc.content && doc.content["/"]) {
       return CID.parse(doc.content["/"]);
     } else {
-      // Empty root
+      // 4. Empty root
       const emptyRoot = await this.#ipfs.dag.put(
         {},
         { storeCodec: "dag-cbor" }

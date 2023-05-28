@@ -1,6 +1,7 @@
 import { AssetId } from "caip";
 import type { IPFS } from "ipfs-core-types";
 import { CeramicApi } from "@ceramicnetwork/common";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client/core";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -18,6 +19,7 @@ export type ConfigOptions = {
   ipfsGatewayHost?: string;
   ceramic: CeramicApi;
   w3InvocationConfig?: InvocationConfig;
+  apolloClient: ApolloClient<NormalizedCacheObject>;
 };
 
 export class GeoWebContent {
