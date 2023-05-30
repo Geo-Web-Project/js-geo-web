@@ -20,11 +20,47 @@ import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
 import { create } from "@web3-storage/w3up-client";
 import { StoreConf } from "@web3-storage/access";
+import { gql } from "@apollo/client/core";
+import { createMockClient } from "@apollo/client/testing/core";
 
 declare global {
   const ceramic: CeramicApi;
   const ipfs: IPFS;
 }
+
+const parcelQuery = gql`
+  query GeoWebParcel($id: String) {
+    geoWebParcel(id: $id) {
+      contentHash
+    }
+  }
+`;
+
+const apolloClientMock = createMockClient(
+  {
+    geoWebParcel: {
+      contentHash:
+        "0xe3010170122029f2d17be6139079dc48696d1f582a8530eb9805b561eda517e22a892c7e3f1f",
+    },
+  },
+  parcelQuery,
+  {
+    id: Number(316).toString(16),
+  }
+);
+
+const apolloClient = (id: string) =>
+  createMockClient(
+    {
+      geoWebParcel: {
+        contentHash: "0x",
+      },
+    },
+    parcelQuery,
+    {
+      id,
+    }
+  );
 
 class EthereumProvider extends EventEmitter {
   wallet: EthereumWallet;
@@ -76,7 +112,35 @@ describe("resolveRoot", () => {
     ceramic.did = did;
   });
 
-  test("should resolve root #1: EIP-55 address", async () => {
+  test("should resolve root #1: IPFS CID", async () => {
+    const authMethod = await createEthereumAuthMethod();
+    const session = await DIDSession.authorize(authMethod, {
+      resources: [`ceramic://*`],
+    });
+    ceramic.did = session.did;
+
+    const parcelId = new AssetId(
+      AssetId.parse(
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/316"
+      )
+    );
+    const ownerDID = session.did.parent;
+    // Create root
+    const cid = CID.parse(
+      "bafybeibj6lixxzqtsb45ysdjnupvqkufgdvzqbnvmhw2kf7cfkesy7r7d4"
+    );
+
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClientMock,
+    });
+
+    const result = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
+    expect(result).toEqual(cid);
+  }, 30000);
+
+  test("should resolve root #2: EIP-55 address", async () => {
     const authMethod = await createEthereumAuthMethod();
     const session = await DIDSession.authorize(authMethod, {
       resources: [`ceramic://*`],
@@ -101,13 +165,17 @@ describe("resolveRoot", () => {
     });
     await doc.update(json.decode(bytes));
 
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const result = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     expect(result).toEqual(cid);
   }, 30000);
 
-  test("should resolve root #2: Lowercase address", async () => {
+  test("should resolve root #3: Lowercase address", async () => {
     const authMethod = await createEthereumAuthMethod();
     const session = await DIDSession.authorize(authMethod, {
       resources: [`ceramic://*`],
@@ -132,7 +200,11 @@ describe("resolveRoot", () => {
     });
     await doc.update(json.decode(bytes));
 
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const result = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     expect(result).toEqual(cid);
@@ -152,7 +224,11 @@ describe("resolveRoot", () => {
     );
     const ownerDID = session.did.parent;
 
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
     const emptyRoot = await ipfs.dag.put({}, { storeCodec: "dag-cbor" });
 
     const result = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
@@ -223,7 +299,11 @@ describe("getPath", () => {
     );
     const ownerDID = ceramic.did!.parent;
 
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const result = await gwContent.raw.getPath("/", {
       ownerDID,
@@ -240,7 +320,11 @@ describe("getPath", () => {
     );
     const ownerDID = ceramic.did!.parent;
 
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const result = await gwContent.raw.getPath("/", {
       ownerDID,
@@ -257,7 +341,11 @@ describe("getPath", () => {
       )
     );
     const ownerDID = ceramic.did!.parent;
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const result = await gwContent.raw.getPath("/mediaGallery", {
       ownerDID,
@@ -274,7 +362,11 @@ describe("getPath", () => {
       )
     );
     const ownerDID = ceramic.did!.parent;
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const result = await gwContent.raw.getPath("/mediaGallery", {
       ownerDID,
@@ -295,12 +387,13 @@ describe("getPath", () => {
       ceramic,
       ipfs,
       ipfsGatewayHost: "https://w3s.link",
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
     });
 
     const rootCid = CID.parse(
       "bafyreidpdi3nm377aepkqlagkzzusyq5lj4uyya7phthqwaiiiimognnua"
     );
-    await gwContent.raw.commit(rootCid, { parcelId, ownerDID });
+    await gwContent.raw.commit(rootCid);
 
     const result = await gwContent.raw.getPath("/mediaGallery", {
       ownerDID,
@@ -376,7 +469,11 @@ describe("putPath", () => {
       )
     );
     const ownerDID = ceramic.did!.parent;
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.putPath(
@@ -400,7 +497,11 @@ describe("putPath", () => {
       )
     );
     const ownerDID = ceramic.did!.parent;
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.putPath(
@@ -424,7 +525,11 @@ describe("putPath", () => {
       },
     });
 
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient("0x"),
+    });
 
     const result = await gwContent.raw.putPath(rootCid, "/name/inner", "World");
 
@@ -439,7 +544,11 @@ describe("putPath", () => {
       )
     );
     const ownerDID = ceramic.did!.parent;
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const basicProfileCid = await ipfs.dag.put(
       {
@@ -471,7 +580,11 @@ describe("putPath", () => {
       )
     );
     const ownerDID = ceramic.did!.parent;
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.putPath(
@@ -506,7 +619,11 @@ describe("putPath", () => {
     );
     const ownerDID = session.did.parent;
 
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const basicProfileCid = await ipfs.dag.put(
       {
@@ -552,6 +669,7 @@ describe("putPath", () => {
         with: w3Client.currentSpace()?.did(),
         proofs: w3Client.proofs(),
       },
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
     });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
@@ -636,7 +754,11 @@ describe("deletePath", () => {
       )
     );
     const ownerDID = ceramic.did!.parent;
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.deletePath(
@@ -655,7 +777,11 @@ describe("deletePath", () => {
       )
     );
     const ownerDID = ceramic.did!.parent;
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.deletePath(rootCid, "/mediaGallery/0");
@@ -671,7 +797,11 @@ describe("deletePath", () => {
       )
     );
     const ownerDID = ceramic.did!.parent;
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.deletePath(rootCid, "/mediaGallery/0", {
@@ -689,7 +819,11 @@ describe("deletePath", () => {
       )
     );
     const ownerDID = ceramic.did!.parent;
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+    });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
     const result = await gwContent.raw.deletePath(rootCid, "/basicProfile", {
@@ -762,25 +896,21 @@ describe("commit", () => {
   test("should commit", async () => {
     const parcelId = new AssetId(
       AssetId.parse(
-        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/316"
       )
     );
     const ownerDID = ceramic.did!.parent;
-    const gwContent = new GeoWebContent({ ceramic, ipfs });
+    const gwContent = new GeoWebContent({
+      ceramic,
+      ipfs,
+      apolloClient: apolloClientMock,
+    });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
-    const result = await gwContent.raw.putPath(
-      rootCid,
-      "/basicProfile",
-      {
-        name: "Hello World",
-      },
-      { parentSchema: "ParcelRoot", leafSchema: "BasicProfile" }
+    const contentHash = await gwContent.raw.commit(rootCid);
+
+    expect(contentHash).toEqual(
+      "0xe3010170122029f2d17be6139079dc48696d1f582a8530eb9805b561eda517e22a892c7e3f1f"
     );
-
-    await gwContent.raw.commit(result, { ownerDID, parcelId });
-
-    const newRootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
-    expect(newRootCid.toString()).toEqual(result.toString());
   }, 30000);
 });
