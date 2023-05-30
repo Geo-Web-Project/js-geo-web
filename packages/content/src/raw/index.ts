@@ -99,15 +99,10 @@ export class API {
         const rawCid = base16.decode(
           `f${queryResult.data.geoWebParcel?.contentHash?.split("0x")[1]}`
         );
-        console.log(rawCid);
         const [code] = varint.decode(rawCid);
-        console.log(code);
         if (code !== IPFS_CODE) {
           console.debug("Content hash is not IPFS CID");
         } else {
-          console.log(rawCid);
-          console.log(rawCid.subarray(2));
-          console.log(CID.decodeFirst(rawCid.subarray(2)));
           return CID.decode(rawCid.subarray(2));
         }
       } catch (e) {
