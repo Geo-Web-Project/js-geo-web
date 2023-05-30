@@ -12,6 +12,7 @@ import * as dagcbor from "@ipld/dag-cbor";
 import { default as axios } from "axios";
 import { ApolloClient, NormalizedCacheObject, gql } from "@apollo/client/core";
 import { base16 } from "multiformats/bases/base16";
+import contentHash from "@ensdomains/content-hash";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -51,8 +52,6 @@ export interface ParcelQuery {
   geoWebParcel?: GeoWebParcel;
 }
 
-const IPFS_CODE = 0xe3;
-
 export class API {
   #ipfs: IPFS;
   #ipfsGatewayHost?: string;
@@ -71,9 +70,9 @@ export class API {
   /*
    * Initialize empty content root
    */
-  async initRoot(opts: ParcelOptions): Promise<void> {
+  async initRoot(): Promise<string> {
     const emptyRoot = await this.#ipfs.dag.put({}, { storeCodec: "dag-cbor" });
-    return await this.commit(emptyRoot, opts);
+    return await this.commit(emptyRoot);
   }
 
   /*
@@ -96,14 +95,15 @@ export class API {
 
     if (queryResult.data.geoWebParcel?.contentHash) {
       try {
-        const rawCid = base16.decode(
-          `f${queryResult.data.geoWebParcel?.contentHash?.split("0x")[1]}`
+        const codec = contentHash.getCodec(
+          queryResult.data.geoWebParcel.contentHash
         );
-        const [code] = varint.decode(rawCid);
-        if (code !== IPFS_CODE) {
+        if (codec !== "ipfs-ns") {
           console.debug("Content hash is not IPFS CID");
         } else {
-          return CID.decode(rawCid.subarray(2));
+          return CID.parse(
+            contentHash.decode(queryResult.data.geoWebParcel.contentHash)
+          ).toV1();
         }
       } catch (e) {
         console.debug("Failed to find CID. Falling back to Ceramic: ", e);
@@ -430,20 +430,10 @@ export class API {
   }
 
   /*
-   * Commit new root to Ceramic
+   * Commit new root
    */
-  async commit(root: CID, opts: ParcelOptions): Promise<void> {
-    const doc = await this.#tileLoader.deterministic<Record<string, any>>(
-      {
-        controllers: [opts.ownerDID],
-        family: `geo-web-parcel`,
-        tags: [opts.parcelId.toString()],
-      },
-      { sync: SyncOptions.SYNC_ON_ERROR }
-    );
-
-    // Commit to TileDocument
-    const bytes = dagjson.encode(root);
-    await doc.update(json.decode(bytes));
+  async commit(root: CID): Promise<string> {
+    // Return formatted content hash
+    return `0x${contentHash.fromIpfs(root.toString())}`;
   }
 }

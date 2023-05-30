@@ -393,7 +393,7 @@ describe("getPath", () => {
     const rootCid = CID.parse(
       "bafyreidpdi3nm377aepkqlagkzzusyq5lj4uyya7phthqwaiiiimognnua"
     );
-    await gwContent.raw.commit(rootCid, { parcelId, ownerDID });
+    await gwContent.raw.commit(rootCid);
 
     const result = await gwContent.raw.getPath("/mediaGallery", {
       ownerDID,
@@ -896,29 +896,21 @@ describe("commit", () => {
   test("should commit", async () => {
     const parcelId = new AssetId(
       AssetId.parse(
-        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/771769"
+        "eip155:1/erc721:0x06012c8cf97BEaD5deAe237070F9587f8E7A266d/316"
       )
     );
     const ownerDID = ceramic.did!.parent;
     const gwContent = new GeoWebContent({
       ceramic,
       ipfs,
-      apolloClient: apolloClient(Number(parcelId.tokenId).toString(16)),
+      apolloClient: apolloClientMock,
     });
 
     const rootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
-    const result = await gwContent.raw.putPath(
-      rootCid,
-      "/basicProfile",
-      {
-        name: "Hello World",
-      },
-      { parentSchema: "ParcelRoot", leafSchema: "BasicProfile" }
+    const contentHash = await gwContent.raw.commit(rootCid);
+
+    expect(contentHash).toEqual(
+      "0xe3010170122029f2d17be6139079dc48696d1f582a8530eb9805b561eda517e22a892c7e3f1f"
     );
-
-    await gwContent.raw.commit(result, { ownerDID, parcelId });
-
-    const newRootCid = await gwContent.raw.resolveRoot({ ownerDID, parcelId });
-    expect(newRootCid.toString()).toEqual(result.toString());
   }, 30000);
 });
