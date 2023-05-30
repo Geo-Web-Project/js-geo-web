@@ -1,17 +1,14 @@
 import type { IPFS } from "ipfs-core-types";
 import { SyncOptions } from "@ceramicnetwork/common";
 import { ConfigOptions, ParcelOptions } from "../index";
-import { CID, varint } from "multiformats";
+import { CID } from "multiformats";
 import { TileLoader } from "@glazed/tile-loader";
 import { schema } from "@geo-web/types";
-import * as json from "multiformats/codecs/json";
-import * as dagjson from "@ipld/dag-json";
 import * as Block from "multiformats/block";
 import { sha256 as hasher } from "multiformats/hashes/sha2";
 import * as dagcbor from "@ipld/dag-cbor";
 import { default as axios } from "axios";
 import { ApolloClient, NormalizedCacheObject, gql } from "@apollo/client/core";
-import { base16 } from "multiformats/bases/base16";
 import contentHash from "@ensdomains/content-hash";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment

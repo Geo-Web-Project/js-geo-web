@@ -1,1 +1,1 @@
-declare module "content-hash";
+declare module "@ensdomains/content-hash";
