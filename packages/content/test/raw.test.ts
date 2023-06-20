@@ -20,7 +20,7 @@ import * as json from "multiformats/codecs/json";
 import * as dagjson from "@ipld/dag-json";
 import { create } from "@web3-storage/w3up-client";
 import { StoreConf } from "@web3-storage/access";
-import { gql } from "@apollo/client/core";
+import { gql } from "@apollo/client/core/index.js";
 import { createMockClient } from "@apollo/client/testing/core";
 
 declare global {

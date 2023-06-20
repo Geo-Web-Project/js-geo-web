@@ -8,7 +8,11 @@ import * as Block from "multiformats/block";
 import { sha256 as hasher } from "multiformats/hashes/sha2";
 import * as dagcbor from "@ipld/dag-cbor";
 import { default as axios } from "axios";
-import { ApolloClient, NormalizedCacheObject, gql } from "@apollo/client/core";
+import {
+  ApolloClient,
+  NormalizedCacheObject,
+  gql,
+} from "@apollo/client/core/index.js";
 import contentHash from "@ensdomains/content-hash";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
