@@ -10,7 +10,7 @@ import type { InvocationConfig } from "@web3-storage/upload-client";
 import { API as RawAPI } from "./raw/index.js";
 
 export type ParcelOptions = {
-  parcelId: AssetId;
+  parcelId?: AssetId;
   ownerDID: string;
 };
 

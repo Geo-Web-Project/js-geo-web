@@ -82,6 +82,10 @@ export class API {
    * 4. Empty root
    */
   async resolveRoot(opts: ParcelOptions): Promise<CID> {
+    if (!opts.parcelId) {
+      return await this._emptyRoot();
+    }
+
     // 1. Subgraph
     const queryResult = await this.#apolloClient.query<ParcelQuery>({
       query: parcelQuery,
@@ -135,11 +139,7 @@ export class API {
       return CID.parse(doc.content["/"]);
     } else {
       // 4. Empty root
-      const emptyRoot = await this.#ipfs.dag.put(
-        {},
-        { storeCodec: "dag-cbor" }
-      );
-      return emptyRoot;
+      return await this._emptyRoot();
     }
   }
 
@@ -432,5 +432,10 @@ export class API {
   async commit(root: CID): Promise<string> {
     // Return formatted content hash
     return `0x${contentHash.fromIpfs(root.toString())}`;
+  }
+
+  async _emptyRoot() {
+    const emptyRoot = await this.#ipfs.dag.put({}, { storeCodec: "dag-cbor" });
+    return emptyRoot;
   }
 }
