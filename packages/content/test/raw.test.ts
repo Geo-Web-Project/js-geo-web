@@ -45,7 +45,7 @@ const apolloClientMock = createMockClient(
   },
   parcelQuery,
   {
-    id: Number(316).toString(16),
+    id: `0x${Number(316).toString(16)}`,
   }
 );
 
@@ -58,7 +58,7 @@ const apolloClient = (id: string) =>
     },
     parcelQuery,
     {
-      id,
+      id: `0x${id}`,
     }
   );
 

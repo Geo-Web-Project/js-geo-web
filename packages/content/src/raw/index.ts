@@ -94,7 +94,7 @@ export class API {
     const queryResult = await this.#apolloClient.query<ParcelQuery>({
       query: parcelQuery,
       variables: {
-        id: Number(opts.parcelId.tokenId).toString(16),
+        id: `0x${Number(opts.parcelId.tokenId).toString(16)}`,
       },
     });
 
