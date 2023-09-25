@@ -61,7 +61,7 @@
     "@ceramicnetwork/http-client": "^2.15.0",
     "@ceramicnetwork/stream-tile": "^2.13.0",
     "@ensdomains/content-hash": "^2.5.7",
-    "@geo-web/types": "workspace:^0.2.0",
+    "@geo-web/types": "^0.2.0",
     "@glazed/tile-loader": "^0.2.1",
     "@ipld/car": "^5.0.1",
     "@ipld/dag-cbor": "^8.0.0",

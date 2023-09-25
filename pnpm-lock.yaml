@@ -48,7 +48,7 @@ importers:
       '@didtools/pkh-ethereum': ^0.0.3
       '@ensdomains/content-hash': ^2.5.7
       '@ethersproject/wallet': ^5.7.0
-      '@geo-web/types': workspace:^0.2.0
+      '@geo-web/types': ^0.2.0
       '@glazed/tile-loader': ^0.2.1
       '@ipld/car': ^5.0.1
       '@ipld/dag-cbor': ^8.0.0
@@ -78,7 +78,7 @@ importers:
       '@ceramicnetwork/http-client': 2.15.0
       '@ceramicnetwork/stream-tile': 2.14.0
       '@ensdomains/content-hash': 2.5.7
-      '@geo-web/types': link:../types
+      '@geo-web/types': 0.2.0
       '@glazed/tile-loader': 0.2.1
       '@ipld/car': 5.0.1
       '@ipld/dag-cbor': 8.0.0
@@ -1283,6 +1283,12 @@ packages:
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
     dev: true
     optional: true
+
+  /@geo-web/types/0.2.0:
+    resolution: {integrity: sha512-dqkebh/T+UQtD9e/i7QObkWgpf2paNR1+Xk1O94gkojLMB+SA0xOaJQyLRR2LUPOEe9bBAeuULtUwbleJOWZvg==}
+    dependencies:
+      multiformats: 10.0.2
+    dev: false
 
   /@glazed/tile-loader/0.2.1:
     resolution: {integrity: sha512-opICtDY1OIhIYJD8UVTO8BdNDMGD+Ui4MPA1JifpVeUWAO97PtgsXZ1irLLab5l5zDiakmajoiWZxv2PbVGTlA==}
