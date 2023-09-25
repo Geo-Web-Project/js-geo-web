@@ -1,10 +1,8 @@
-import { CID } from "multiformats/cid";
-
-export type MediaGallery = CID[];
+export type MediaGallery = string[];
 
 export interface MediaObject {
   name?: string;
-  content: CID;
+  content: string;
   contentSize?: number;
   encodingFormat: Encoding;
 }
